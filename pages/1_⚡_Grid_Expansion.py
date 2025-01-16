@@ -38,6 +38,7 @@ The model specifically uses:
 - **An annual CO₂ emission constraint to drive decarbonization.**
 """)
 
+# Load and Visualize Data
 year = 2030
 url = f"https://raw.githubusercontent.com/PyPSA/technology-data/master/outputs/costs_{year}.csv"
 costs = pd.read_csv(url, index_col=[0, 1])
@@ -57,24 +58,21 @@ defaults = {
 }
 costs = costs.value.unstack().fillna(defaults)
 
-costs.at["OCGT", "fuel"] = costs.at["gas", "fuel"]
-costs.at["CCGT", "fuel"] = costs.at["gas", "fuel"]
-costs.at["OCGT", "CO2 intensity"] = costs.at["gas", "CO2 intensity"]
-costs.at["CCGT", "CO2 intensity"] = costs.at["gas", "CO2 intensity"]
-
-def annuity(r, n):
-    return r / (1.0 - 1.0 / (1.0 + r) ** n)
-
-costs["marginal_cost"] = costs["VOM"] + costs["fuel"] / costs["efficiency"]
-annuity_values = costs.apply(lambda x: annuity(x["discount rate"], x["lifetime"]), axis=1)
-costs["capital_cost"] = (annuity_values + costs["FOM"] / 100) * costs["investment"]
-
-# Load Time-Series Data
+st.subheader("Electricity Demand Time Series")
 url = "https://tubcloud.tu-berlin.de/s/pKttFadrbTKSJKF/download/time-series-lecture-2.csv"
 ts = pd.read_csv(url, index_col=0, parse_dates=True)
 ts.load *= 1e3  # Convert load to MW
 resolution = 4
 ts = ts.resample(f"{resolution}h").first()
+
+fig, ax = plt.subplots()
+ts.load.plot(ax=ax, figsize=(10, 4), title="Electricity Demand (MW)")
+st.pyplot(fig)
+
+st.subheader("Wind and Solar Capacity Factors")
+fig, ax = plt.subplots()
+ts[["onwind", "offwind", "solar"]].plot(ax=ax, figsize=(10, 4), title="Capacity Factors")
+st.pyplot(fig)
 
 # Initialize Network
 n = pypsa.Network()
@@ -128,4 +126,4 @@ st.markdown("""
 """)
 
 # Export to NetCDF
-#n.export_to_netcdf("network-new.nc")
+n.export_to_netcdf("network-new.nc")
