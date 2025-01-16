@@ -21,6 +21,23 @@ The model simulates different energy sources and storage technologies to achieve
 The goal is to optimize the energy mix while minimizing costs and emissions.
 """)
 
+st.markdown("""
+## Data Overview
+The dataset used in this project includes:
+- **Technology Costs (from PyPSA technology data, 2030)**
+  - Includes capital cost, operational cost, efficiency, and CO₂ emissions for each technology.
+- **Electricity Demand (Germany 2015)**
+  - Hourly electricity consumption data for an entire year.
+- **Renewable Generation Time Series**
+  - Capacity factors for wind and solar to estimate real-time energy generation.
+
+### Selected Data
+The model specifically uses:
+- **Wind and solar availability factors from time series.**
+- **Investment costs, fuel costs, and efficiency data for generation and storage technologies.**
+- **An annual CO₂ emission constraint to drive decarbonization.**
+""")
+
 year = 2030
 url = f"https://raw.githubusercontent.com/PyPSA/technology-data/master/outputs/costs_{year}.csv"
 costs = pd.read_csv(url, index_col=[0, 1])
@@ -72,6 +89,10 @@ n.add("Carrier", carriers, co2_emissions=[costs.at[c, "CO2 intensity"] for c in 
 # Add Loads
 n.add("Load", "demand", bus="electricity", p_set=ts.load)
 
+# Store Initial Generator Capacities Before Optimization
+initial_generator_capacities = n.generators.p_nom_opt.copy()
+initial_storage_capacities = n.storage_units.p_nom_opt.copy()
+
 # Add Generators
 for tech in ["onwind", "offwind", "solar"]:
     n.add("Generator", tech, bus="electricity", carrier=tech, p_max_pu=ts[tech],
@@ -82,42 +103,29 @@ n.add("Generator", "OCGT", bus="electricity", carrier="OCGT",
       capital_cost=costs.at["OCGT", "capital_cost"], marginal_cost=costs.at["OCGT", "marginal_cost"],
       efficiency=costs.at["OCGT", "efficiency"], p_nom_extendable=True)
 
-# Add Storage Units
-n.add("StorageUnit", "battery storage", bus="electricity", carrier="battery storage",
-      max_hours=6, capital_cost=costs.at["battery inverter", "capital_cost"] + 6 * costs.at["battery storage", "capital_cost"],
-      efficiency_store=costs.at["battery inverter", "efficiency"], efficiency_dispatch=costs.at["battery inverter", "efficiency"],
-      p_nom_extendable=True, cyclic_state_of_charge=True)
-
-capital_costs = (costs.at["electrolysis", "capital_cost"] + costs.at["fuel cell", "capital_cost"] + 168 * costs.at["hydrogen storage underground", "capital_cost"])
-n.add("StorageUnit", "hydrogen storage underground", bus="electricity", carrier="hydrogen storage underground",
-      max_hours=168, capital_cost=capital_costs,
-      efficiency_store=costs.at["electrolysis", "efficiency"], efficiency_dispatch=costs.at["fuel cell", "efficiency"],
-      p_nom_extendable=True, cyclic_state_of_charge=True)
-
-# Add Emission Constraint
-n.add("GlobalConstraint", "CO2Limit", carrier_attribute="co2_emissions", sense="<=", constant=0)
-
 # Optimize Model
 n.optimize(solver_name="highs")
 
-# Display results in Streamlit
-st.header("Optimized Generator Capacities")
-st.write(n.generators.p_nom_opt)
-st.header("Optimized Storage Capacities")
-st.write(n.storage_units.p_nom_opt)
+# Display Before and After Comparison
+st.header("Generator Capacities: Before vs After Optimization")
+comparison_df = pd.DataFrame({
+    "Before Optimization": initial_generator_capacities,
+    "After Optimization": n.generators.p_nom_opt
+})
+st.write(comparison_df)
+
+st.header("Storage Capacities: Before vs After Optimization")
+storage_comparison_df = pd.DataFrame({
+    "Before Optimization": initial_storage_capacities,
+    "After Optimization": n.storage_units.p_nom_opt
+})
+st.write(storage_comparison_df)
 
 st.markdown("""
 ## Results Analysis
-- **Optimal Generator Capacities**: This section presents the installed capacity of different generators.
-- **Storage Capacities**: Displays how much storage is deployed.
-- **Cost Analysis**: Pie chart below shows cost distribution.
+- **Before Optimization:** Shows initial capacities before the solver runs.
+- **After Optimization:** Displays optimized capacities after the model balances cost and emissions constraints.
 """)
 
-# Plot System Cost Breakdown
-def system_cost(n):
-    tsc = pd.concat([n.statistics.capex(), n.statistics.opex()], axis=1)
-    return tsc.sum(axis=1).droplevel(0).div(1e9).round(2)  # billion €/a
-
-fig, ax = plt.subplots()
-system_cost(n).plot.pie(ax=ax, figsize=(4, 4))
-st.pyplot(fig)
+# Export to NetCDF
+#n.export_to_netcdf("network-new.nc")
