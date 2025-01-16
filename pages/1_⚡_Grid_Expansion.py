@@ -88,11 +88,21 @@ with col2:
 # Energy Dispatch Plot
 def plot_dispatch(n, time="2015-07"):
     p = (n.statistics.energy_balance(aggregate_time=False)
-         .groupby("carrier").sum().div(1e3).drop("-").T)
+         .groupby("carrier").sum().div(1e3).drop("-", errors="ignore").T)
 
     fig, ax = plt.subplots(figsize=(8, 4))
-    color = p.columns.map(n.carriers.color)
-    p.where(p > 0).loc[time].plot.area(ax=ax, linewidth=0, color=color)
+
+    default_color = "gray"
+    color_mapping = n.carriers["color"].to_dict() if "color" in n.carriers else {}
+
+    colors = [color_mapping.get(carrier, default_color) for carrier in p.columns]
+
+    p.where(p > 0).loc[time].plot.area(ax=ax, linewidth=0, color=colors)
+
+    charge = p.where(p < 0).dropna(how="all", axis=1).loc[time]
+    if not charge.empty:
+        charge.plot.area(ax=ax, linewidth=0, color=colors)
+
     plt.ylabel("GW")
     plt.title(f"Energy Dispatch for {time}")
     plt.legend(loc="center left", bbox_to_anchor=(1.0, 0.5))
