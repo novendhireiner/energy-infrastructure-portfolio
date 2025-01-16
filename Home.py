@@ -9,7 +9,7 @@ Regional Grid Expansion Model in Germany
 
 st.sidebar.title("About")
 st.sidebar.info(markdown)
-logo = "https://github.com/novendhireiner/regional-grid-expansion-model/blob/main/data/powerplant.png"
+logo = "data/powerplant.png"
 st.sidebar.image(logo)
 
 # Customize page title
