@@ -5,15 +5,6 @@ import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="Germany Energy Grid", layout="wide")
 
-markdown = """
-Regional Grid Expansion Model in Germany
-"""
-
-st.sidebar.title("About")
-st.sidebar.info(markdown)
-logo = "data/grid.png"
-st.sidebar.image(logo)
-
 # Load Germany time-series data
 @st.cache_data
 def load_data():
