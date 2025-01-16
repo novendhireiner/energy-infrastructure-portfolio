@@ -9,7 +9,7 @@ Regional Grid Expansion Model in Germany
 
 st.sidebar.title("About")
 st.sidebar.info(markdown)
-logo = "data/powerplant.png"
+logo = "data/grid.png"
 st.sidebar.image(logo)
 
 # Customize page title
