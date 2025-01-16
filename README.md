@@ -1,6 +1,6 @@
 # 🇩🇪 Germany Energy Grid Optimization with PyPSA & Streamlit
 
-📢 **Author:** _Your Name_  
+📢 **Author:** Novendhi Reiner Maturbongs
 📅 **Date:** _January 2025_  
 🔧 **Technologies:** PyPSA, Python, Streamlit, Pandas, Matplotlib  
 
