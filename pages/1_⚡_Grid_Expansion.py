@@ -1,120 +1,92 @@
-import streamlit as st
 import pypsa
 import pandas as pd
 import matplotlib.pyplot as plt
+import streamlit as st
 
-st.set_page_config(page_title="Germany Energy Grid", layout="wide")
+plt.style.use("bmh")
 
-# Load Germany time-series data
-@st.cache_data
-def load_data():
-    url = "https://tubcloud.tu-berlin.de/s/pKttFadrbTKSJKF/download/time-series-lecture-2.csv"
-    ts = pd.read_csv(url, index_col=0, parse_dates=True)
-    ts["load"] *= 1e3  # Convert load from GW to MW
-    return ts.resample("4h").mean()
+st.title("Decarbonizing Electricity Supply with Sector Coupling")
 
-ts = load_data()
+# Load Cost Data
+year = 2030
+url = f"https://raw.githubusercontent.com/PyPSA/technology-data/master/outputs/costs_{year}.csv"
+costs = pd.read_csv(url, index_col=[0, 1])
 
-# Create PyPSA Network
-def create_network(co2_limit, transmission_cost):
-    n = pypsa.Network()
-    n.set_snapshots(ts.index)
+# Convert kW-based costs to MW
+costs.loc[costs.unit.str.contains("/kW"), "value"] *= 1e3
+costs.unit = costs.unit.str.replace("/kW", "/MW")
 
-    regions = ["North", "Central", "South"]
-    region_shares = {"North": 0.3, "Central": 0.4, "South": 0.3}
-    regional_loads = {region: ts["load"] * share for region, share in region_shares.items()}
+defaults = {
+    "FOM": 0,
+    "VOM": 0,
+    "efficiency": 1,
+    "fuel": 0,
+    "investment": 0,
+    "lifetime": 25,
+    "CO2 intensity": 0,
+    "discount rate": 0.07,
+}
 
-    for region in regions:
-        n.add("Bus", region)
-        n.add("Load", f"{region}_load", bus=region, p_set=regional_loads[region])
+costs = costs.value.unstack().fillna(defaults)
 
-    regional_profiles = {
-        "North": {"onwind": ts["onwind"] * 1.2, "solar": ts["solar"] * 0.8},
-        "Central": {"onwind": ts["onwind"] * 0.9, "solar": ts["solar"] * 1.0},
-        "South": {"onwind": ts["onwind"] * 0.7, "solar": ts["solar"] * 1.2},
-    }
+# Define annuity function
+def annuity(r, n):
+    return r / (1.0 - 1.0 / (1.0 + r) ** n)
 
-    for region, profiles in regional_profiles.items():
-        for tech, profile in profiles.items():
-            capital_cost = 500 if tech == "onwind" else 800
-            n.add("Generator", f"{region}_{tech}", bus=region, p_nom_extendable=True,
-                  capital_cost=capital_cost, marginal_cost=0, efficiency=1.0, p_max_pu=profile)
+costs["marginal_cost"] = costs["VOM"] + costs["fuel"] / costs["efficiency"]
+costs["capital_cost"] = costs.apply(lambda x: annuity(x["discount rate"], x["lifetime"]), axis=1) * costs["investment"]
 
-    distances = {("North", "Central"): 300, ("Central", "South"): 250, ("North", "South"): 500}
-    for (region1, region2), distance in distances.items():
-        n.add("Link", f"Line_{region1}_{region2}", bus0=region1, bus1=region2,
-              p_nom_extendable=True, capital_cost=transmission_cost * distance, marginal_cost=0)
+# Load Time-Series Data
+url = "https://tubcloud.tu-berlin.de/s/pKttFadrbTKSJKF/download/time-series-lecture-2.csv"
+ts = pd.read_csv(url, index_col=0, parse_dates=True)
+ts.load *= 1e3  # Convert load to MW
+resolution = 4
+ts = ts.resample(f"{resolution}h").first()
 
-    n.add("GlobalConstraint", "CO2Limit", carrier_attribute="co2_emissions",
-          sense="<=", constant=co2_limit * 1e6)
+# Initialize Network
+n = pypsa.Network()
+n.add("Bus", "electricity")
+n.add("Bus", "hydrogen")
+n.add("Bus", "heat")
 
-    n.optimize(solver_name="highs")
-    return n
+n.set_snapshots(ts.index)
+n.snapshot_weightings.loc[:, :] = resolution
 
-# Streamlit Sidebar Inputs
-st.sidebar.header("Model Inputs")
-co2_limit = st.sidebar.slider("CO₂ Limit (Mt)", min_value=0, max_value=200, value=100, step=10)
-transmission_cost = st.sidebar.slider("Transmission Cost (€/MW/km)", min_value=100, max_value=1000, value=400, step=50)
+# Add Generators and Technologies
+def add_components(n):
+    carriers = ["onwind", "offwind", "solar", "OCGT", "hydrogen storage", "battery storage", "heat pump"]
+    n.add("Carrier", carriers, co2_emissions=[costs.at[c, "CO2 intensity"] for c in carriers])
+    n.add("Load", "electricity_demand", bus="electricity", p_set=ts.load)
+    n.add("Load", "heat_demand", bus="heat", p_set=ts.load * 0.5)
+    for tech in ["onwind", "offwind", "solar"]:
+        n.add("Generator", tech, bus="electricity", carrier=tech, p_max_pu=ts[tech],
+              capital_cost=costs.at[tech, "capital_cost"], marginal_cost=costs.at[tech, "marginal_cost"],
+              efficiency=costs.at[tech, "efficiency"], p_nom_extendable=True)
+    n.add("Generator", "OCGT", bus="electricity", carrier="OCGT",
+          capital_cost=costs.at["OCGT", "capital_cost"], marginal_cost=costs.at["OCGT", "marginal_cost"],
+          efficiency=costs.at["OCGT", "efficiency"], p_nom_extendable=True)
+    n.add("Link", "heat_pump", bus0="electricity", bus1="heat", carrier="heat pump",
+          efficiency=3, capital_cost=costs.at["heat pump", "capital_cost"], p_nom_extendable=True)
+    n.add("Link", "electrolyzer", bus0="electricity", bus1="hydrogen", carrier="electrolyzer",
+          efficiency=costs.at["electrolysis", "efficiency"], capital_cost=costs.at["electrolysis", "capital_cost"], p_nom_extendable=True)
+    n.add("StorageUnit", "battery", bus="electricity", carrier="battery storage",
+          max_hours=6, capital_cost=costs.at["battery inverter", "capital_cost"] + 6 * costs.at["battery storage", "capital_cost"],
+          efficiency_store=costs.at["battery inverter", "efficiency"], efficiency_dispatch=costs.at["battery inverter", "efficiency"],
+          p_nom_extendable=True, cyclic_state_of_charge=True)
 
-# Solve the model
-st.sidebar.text("Running Optimization...")
-network = create_network(co2_limit, transmission_cost)
-st.sidebar.text("✅ Optimization Complete!")
+add_components(n)
+n.optimize(solver_name="highs")
 
-# Results: Generation & Transmission
-st.header("Optimized Energy System Results")
+# Display results
+st.header("Optimized Generator Capacities")
+st.write(n.generators.p_nom_opt)
+st.header("Optimized Storage Capacities")
+st.write(n.storage_units.p_nom_opt)
 
-col1, col2 = st.columns(2)
+# Plot System Cost Breakdown
+def system_cost(n):
+    return (n.statistics.capex() + n.statistics.opex()).sum(axis=1).droplevel(0).div(1e9)
 
-with col1:
-    st.subheader("Optimized Generation Capacities (MW)")
-    gen_capacities = network.generators.p_nom_opt
-    st.dataframe(gen_capacities)
-
-with col2:
-    st.subheader("Optimized Transmission Capacities (MW)")
-    transmission_capacities = network.links.p_nom_opt
-    st.dataframe(transmission_capacities)
-
-# Energy Dispatch Plot
-def plot_dispatch(n, time="2015-07"):
-    p = (n.statistics.energy_balance(aggregate_time=False)
-         .groupby("carrier").sum().div(1e3).drop("-", errors="ignore").T)
-
-    fig, ax = plt.subplots(figsize=(8, 4))
-
-    default_color = "gray"
-    color_mapping = n.carriers["color"].to_dict() if "color" in n.carriers else {}
-
-    colors = [color_mapping.get(carrier, default_color) for carrier in p.columns]
-
-    p.where(p > 0).loc[time].plot.area(ax=ax, linewidth=0, color=colors)
-
-    charge = p.where(p < 0).dropna(how="all", axis=1).loc[time]
-    if not charge.empty:
-        charge.plot.area(ax=ax, linewidth=0, color=colors)
-
-    plt.ylabel("GW")
-    plt.title(f"Energy Dispatch for {time}")
-    plt.legend(loc="center left", bbox_to_anchor=(1.0, 0.5))
-    return fig
-
-st.subheader("Energy Dispatch Visualization")
-dispatch_time = st.selectbox("Select Time Period", ts.index.strftime('%Y-%m').unique())
-st.pyplot(plot_dispatch(network, time=dispatch_time))
-
-# Sensitivity Analysis: CO2 vs Cost
-def sensitivity_analysis():
-    results = {}
-    for co2 in [0, 50, 100, 150, 200]:
-        n = create_network(co2, transmission_cost)
-        cost = sum(n.statistics.capex()) + sum(n.statistics.opex())
-        results[co2] = cost / 1e9  # Convert to billion euros
-
-    df = pd.DataFrame(results, index=["System Cost"]).T
-    return df
-
-st.subheader("Sensitivity Analysis: CO₂ Limit vs System Cost")
-if st.button("Run Sensitivity Analysis"):
-    sensitivity_results = sensitivity_analysis()
-    st.line_chart(sensitivity_results)
+fig, ax = plt.subplots()
+system_cost(n).plot.pie(ax=ax, figsize=(4, 4))
+st.pyplot(fig)
