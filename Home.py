@@ -4,13 +4,12 @@ st.set_page_config(layout="wide")
 
 # Customize the sidebar
 markdown = """
-A Streamlit map template
-<https://github.com/opengeos/streamlit-map-template>
+Regional Grid Expansion Model in Germany
 """
 
 st.sidebar.title("About")
 st.sidebar.info(markdown)
-logo = "https://i.imgur.com/UbOXYAU.png"
+logo = "https://github.com/novendhireiner/regional-grid-expansion-model/blob/main/data/powerplant.png"
 st.sidebar.image(logo)
 
 # Customize page title
