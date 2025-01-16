@@ -58,6 +58,20 @@ defaults = {
 }
 costs = costs.value.unstack().fillna(defaults)
 
+
+costs.at["OCGT", "fuel"] = costs.at["gas", "fuel"]
+costs.at["CCGT", "fuel"] = costs.at["gas", "fuel"]
+costs.at["OCGT", "CO2 intensity"] = costs.at["gas", "CO2 intensity"]
+costs.at["CCGT", "CO2 intensity"] = costs.at["gas", "CO2 intensity"]
+
+def annuity(r, n):
+    return r / (1.0 - 1.0 / (1.0 + r) ** n)
+
+costs["marginal_cost"] = costs["VOM"] + costs["fuel"] / costs["efficiency"]
+annuity_values = costs.apply(lambda x: annuity(x["discount rate"], x["lifetime"]), axis=1)
+costs["capital_cost"] = (annuity_values + costs["FOM"] / 100) * costs["investment"]
+
+# Load & Shows Time-Series Data
 st.subheader("Electricity Demand Time Series")
 url = "https://tubcloud.tu-berlin.de/s/pKttFadrbTKSJKF/download/time-series-lecture-2.csv"
 ts = pd.read_csv(url, index_col=0, parse_dates=True)
@@ -86,6 +100,8 @@ n.add("Carrier", carriers, co2_emissions=[costs.at[c, "CO2 intensity"] for c in 
 
 # Add Loads
 n.add("Load", "demand", bus="electricity", p_set=ts.load)
+n.loads_t.p_set.plot(figsize=(6, 2), ylabel="MW")
+
 
 # Store Initial Generator Capacities Before Optimization
 initial_generator_capacities = n.generators.p_nom_opt.copy()
@@ -104,26 +120,34 @@ n.add("Generator", "OCGT", bus="electricity", carrier="OCGT",
 # Optimize Model
 n.optimize(solver_name="highs")
 
-# Display Before and After Comparison
-st.header("Generator Capacities: Before vs After Optimization")
-comparison_df = pd.DataFrame({
-    "Before Optimization": initial_generator_capacities,
-    "After Optimization": n.generators.p_nom_opt
-})
-st.write(comparison_df)
+# Add Storage Units
+n.add("StorageUnit", "battery storage", bus="electricity", carrier="battery storage",
+      max_hours=6, capital_cost=costs.at["battery inverter", "capital_cost"] + 6 * costs.at["battery storage", "capital_cost"],
+      efficiency_store=costs.at["battery inverter", "efficiency"], efficiency_dispatch=costs.at["battery inverter", "efficiency"],
+      p_nom_extendable=True, cyclic_state_of_charge=True)
 
-st.header("Storage Capacities: Before vs After Optimization")
-storage_comparison_df = pd.DataFrame({
-    "Before Optimization": initial_storage_capacities,
-    "After Optimization": n.storage_units.p_nom_opt
-})
-st.write(storage_comparison_df)
+# Add Hydrogen Storage
+capital_costs = (costs.at["electrolysis", "capital_cost"] + costs.at["fuel cell", "capital_cost"] + 168 * costs.at["hydrogen storage underground", "capital_cost"])
+n.add("StorageUnit", "hydrogen storage underground", bus="electricity", carrier="hydrogen storage underground",
+      max_hours=168, capital_cost=capital_costs,
+      efficiency_store=costs.at["electrolysis", "efficiency"], efficiency_dispatch=costs.at["fuel cell", "efficiency"],
+      p_nom_extendable=True, cyclic_state_of_charge=True)
 
-st.markdown("""
-## Results Analysis
-- **Before Optimization:** Shows initial capacities before the solver runs.
-- **After Optimization:** Displays optimized capacities after the model balances cost and emissions constraints.
-""")
+# Add Emission Constraint
+n.add("GlobalConstraint", "CO2Limit", carrier_attribute="co2_emissions", sense="<=", constant=0)
+
+n.optimize(solver_name="highs")
+n.generators.p_nom_opt  # MW
+n.storage_units.p_nom_opt  # MW
+n.storage_units.p_nom_opt.div(1e3) * n.storage_units.max_hours  # GWh
+
+# Plot System Cost Breakdown
+def system_cost(n):
+    tsc = pd.concat([n.statistics.capex(), n.statistics.opex()], axis=1)
+    return tsc.sum(axis=1).droplevel(0).div(1e9).round(2)  # billion €/a
+
+system_cost(n).plot.pie(figsize=(4, 4))
+plt.show()
 
 # Export to NetCDF
 n.export_to_netcdf("network-new.nc")
