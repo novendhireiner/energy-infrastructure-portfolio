@@ -29,6 +29,10 @@ defaults = {
 
 costs = costs.value.unstack().fillna(defaults)
 
+# Ensure CO2 intensity column exists
+if "CO2 intensity" not in costs.columns:
+    costs["CO2 intensity"] = 0  # Default to zero emissions if missing
+
 # Define annuity function
 def annuity(r, n):
     return r / (1.0 - 1.0 / (1.0 + r) ** n)
@@ -55,20 +59,33 @@ n.snapshot_weightings.loc[:, :] = resolution
 # Add Generators and Technologies
 def add_components(n):
     carriers = ["onwind", "offwind", "solar", "OCGT", "hydrogen storage", "battery storage", "heat pump"]
-    n.add("Carrier", carriers, co2_emissions=[costs.at[c, "CO2 intensity"] for c in carriers])
+    
+    # Debugging information
+    print("Available carriers in costs dataset:", costs.index.tolist())
+    print("Available columns in costs dataset:", costs.columns.tolist())
+    
+    n.add("Carrier", carriers, co2_emissions=[
+        costs.loc[c, "CO2 intensity"] if c in costs.index else 0 for c in carriers
+    ])
+    
     n.add("Load", "electricity_demand", bus="electricity", p_set=ts.load)
+    
     n.add("Load", "heat_demand", bus="heat", p_set=ts.load * 0.5)
     for tech in ["onwind", "offwind", "solar"]:
         n.add("Generator", tech, bus="electricity", carrier=tech, p_max_pu=ts[tech],
               capital_cost=costs.at[tech, "capital_cost"], marginal_cost=costs.at[tech, "marginal_cost"],
               efficiency=costs.at[tech, "efficiency"], p_nom_extendable=True)
+        
     n.add("Generator", "OCGT", bus="electricity", carrier="OCGT",
           capital_cost=costs.at["OCGT", "capital_cost"], marginal_cost=costs.at["OCGT", "marginal_cost"],
           efficiency=costs.at["OCGT", "efficiency"], p_nom_extendable=True)
+    
     n.add("Link", "heat_pump", bus0="electricity", bus1="heat", carrier="heat pump",
           efficiency=3, capital_cost=costs.at["heat pump", "capital_cost"], p_nom_extendable=True)
+    
     n.add("Link", "electrolyzer", bus0="electricity", bus1="hydrogen", carrier="electrolyzer",
           efficiency=costs.at["electrolysis", "efficiency"], capital_cost=costs.at["electrolysis", "capital_cost"], p_nom_extendable=True)
+    
     n.add("StorageUnit", "battery", bus="electricity", carrier="battery storage",
           max_hours=6, capital_cost=costs.at["battery inverter", "capital_cost"] + 6 * costs.at["battery storage", "capital_cost"],
           efficiency_store=costs.at["battery inverter", "efficiency"], efficiency_dispatch=costs.at["battery inverter", "efficiency"],
