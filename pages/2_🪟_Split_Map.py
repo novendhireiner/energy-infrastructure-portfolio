@@ -71,7 +71,7 @@ annuity_values = costs.apply(lambda x: annuity(x["discount rate"], x["lifetime"]
 costs["capital_cost"] = (annuity_values + costs["FOM"] / 100) * costs["investment"]
 
 # Filter only selected technologies and remove rows with NaN values
-selected_techs = ["onwind", "offwind", "solar", "OCGT", "hydrogen storage underground", "battery storage", "battery inverter"]
+selected_techs = ["onwind", "offwind", "solar", "OCGT", "hydrogen storage underground", "battery storage", "battery inverter", "electrolysis"]
 costs = costs.loc[selected_techs]
 
 if not costs.empty:
