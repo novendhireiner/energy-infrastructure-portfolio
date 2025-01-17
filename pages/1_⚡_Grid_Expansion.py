@@ -9,33 +9,32 @@ st.title("Decarbonizing Electricity Supply with PyPSA")
 
 st.markdown("""
 ## Project Overview
-This project explores the decarbonization of the electricity supply using PyPSA (Python for Power System Analysis). 
-The model simulates different energy sources and storage technologies to achieve a low-carbon electricity grid.
+This project models and optimizes Germany’s electricity system using PyPSA (Python for Power System Analysis). 
+It allows users to:
 
-### Key Components:
-- **Renewable Energy Sources:** Onshore wind, offshore wind, and solar PV.
-- **Backup Generation:** Open Cycle Gas Turbine (OCGT) for flexibility.
-- **Energy Storage:** Battery storage and hydrogen storage underground.
-- **Emission Constraints:** CO₂ limits to drive decarbonization efforts.
+✅ Adjust CO₂ emission limits  
+✅ Modify transmission expansion costs  
+✅ Optimize renewable energy generation & grid capacity  
+✅ Analyze energy dispatch & system costs  
+✅ Perform sensitivity analysis on CO₂ policies  
 
-The goal is to optimize the energy mix while minimizing costs and emissions.
+The optimization minimizes total system costs while satisfying electricity demand using renewables (solar, wind) and transmission expansion.
 """)
+
+st.sidebar.header("Model Settings")
+
+# 1️⃣ User-Controlled CO₂ Limit
+co2_limit = st.sidebar.slider("Set CO₂ Emission Limit (MtCO₂)", min_value=0, max_value=200, value=50, step=10) * 1e6  # Convert to tons
+
+# 2️⃣ Modify Transmission Expansion Costs
+transmission_cost = st.sidebar.number_input("Transmission Expansion Cost (€/MW-km)", min_value=0, value=500)
 
 st.markdown("""
 ## Data Overview
-The dataset used in this project includes:
+This model uses:
 - **Technology Costs (from PyPSA technology data, 2030)**
-  - Includes capital cost, operational cost, efficiency, and CO₂ emissions for each technology.
 - **Electricity Demand (Germany 2015)**
-  - Hourly electricity consumption data for an entire year.
 - **Renewable Generation Time Series**
-  - Capacity factors for wind and solar to estimate real-time energy generation.
-
-### Selected Data
-The model specifically uses:
-- **Wind and solar availability factors from time series.**
-- **Investment costs, fuel costs, and efficiency data for generation and storage technologies.**
-- **An annual CO₂ emission constraint to drive decarbonization.**
 """)
 
 # Load and Visualize Data
@@ -58,7 +57,6 @@ defaults = {
 }
 costs = costs.value.unstack().fillna(defaults)
 
-
 costs.at["OCGT", "fuel"] = costs.at["gas", "fuel"]
 costs.at["CCGT", "fuel"] = costs.at["gas", "fuel"]
 costs.at["OCGT", "CO2 intensity"] = costs.at["gas", "CO2 intensity"]
@@ -71,21 +69,32 @@ costs["marginal_cost"] = costs["VOM"] + costs["fuel"] / costs["efficiency"]
 annuity_values = costs.apply(lambda x: annuity(x["discount rate"], x["lifetime"]), axis=1)
 costs["capital_cost"] = (annuity_values + costs["FOM"] / 100) * costs["investment"]
 
-# Load & Shows Time-Series Data
-st.subheader("Electricity Demand Time Series")
+# Filter only selected technologies and remove rows with NaN values
+selected_techs = ["onwind", "offwind", "solar", "OCGT", "hydrogen storage underground", "battery storage"]
+costs = costs.loc[selected_techs].dropna(how='all')
+
+if not costs.empty:
+    st.subheader("Technology Costs Overview")
+    st.write(costs)
+
+# Load Time-Series Data
 url = "https://tubcloud.tu-berlin.de/s/pKttFadrbTKSJKF/download/time-series-lecture-2.csv"
 ts = pd.read_csv(url, index_col=0, parse_dates=True)
 ts.load *= 1e3  # Convert load to MW
 resolution = 4
 ts = ts.resample(f"{resolution}h").first()
 
+# Show Demand Time-Series
+st.subheader("Electricity Demand Time Series")
 fig, ax = plt.subplots()
-ts.load.plot(ax=ax, figsize=(10, 4), title="Electricity Demand (MW)")
+ts.load.plot(ax=ax, figsize=(6, 2), title="Electricity Demand (MW)", legend=False)
+ax.set_ylabel("MW")
 st.pyplot(fig)
 
 st.subheader("Wind and Solar Capacity Factors")
 fig, ax = plt.subplots()
-ts[["onwind", "offwind", "solar"]].plot(ax=ax, figsize=(10, 4), title="Capacity Factors")
+ts[["onwind", "offwind", "solar"]].plot(ax=ax, figsize=(6, 2), title="Capacity Factors", legend=False)
+ax.set_ylabel("Capacity Factor")
 st.pyplot(fig)
 
 # Initialize Network
@@ -95,20 +104,13 @@ n.set_snapshots(ts.index)
 n.snapshot_weightings.loc[:, :] = resolution
 
 # Add Technologies
-carriers = ["onwind", "offwind", "solar", "OCGT", "hydrogen storage underground", "battery storage"]
-n.add("Carrier", carriers, co2_emissions=[costs.at[c, "CO2 intensity"] for c in carriers])
+n.add("Carrier", selected_techs, co2_emissions=[costs.at[c, "CO2 intensity"] for c in selected_techs])
 
 # Add Loads
 n.add("Load", "demand", bus="electricity", p_set=ts.load)
-n.loads_t.p_set.plot(figsize=(6, 2), ylabel="MW")
-
-
-# Store Initial Generator Capacities Before Optimization
-initial_generator_capacities = n.generators.p_nom_opt.copy()
-initial_storage_capacities = n.storage_units.p_nom_opt.copy()
 
 # Add Generators
-for tech in ["onwind", "offwind", "solar"]:
+for tech in selected_techs[:3]:  # Only onwind, offwind, solar
     n.add("Generator", tech, bus="electricity", carrier=tech, p_max_pu=ts[tech],
           capital_cost=costs.at[tech, "capital_cost"], marginal_cost=costs.at[tech, "marginal_cost"],
           efficiency=costs.at[tech, "efficiency"], p_nom_extendable=True)
@@ -118,36 +120,27 @@ n.add("Generator", "OCGT", bus="electricity", carrier="OCGT",
       efficiency=costs.at["OCGT", "efficiency"], p_nom_extendable=True)
 
 # Optimize Model
-n.optimize(solver_name="highs")
+st.sidebar.subheader("Run Optimization")
+if st.sidebar.button("Optimize System"):
+    n.add("GlobalConstraint", "CO2Limit", carrier_attribute="co2_emissions", sense="<=", constant=co2_limit)
+    n.optimize(solver_name="highs")
 
-# Add Storage Units
-n.add("StorageUnit", "battery storage", bus="electricity", carrier="battery storage",
-      max_hours=6, capital_cost=costs.at["battery inverter", "capital_cost"] + 6 * costs.at["battery storage", "capital_cost"],
-      efficiency_store=costs.at["battery inverter", "efficiency"], efficiency_dispatch=costs.at["battery inverter", "efficiency"],
-      p_nom_extendable=True, cyclic_state_of_charge=True)
+    # Show Optimization Results
+    st.header("Optimized Generator Capacities (MW)")
+    st.write(n.generators.p_nom_opt)
+    
+    st.header("Optimized Storage Capacities (GWh)")
+    st.write(n.storage_units.p_nom_opt * n.storage_units.max_hours / 1e3)
 
-# Add Hydrogen Storage
-capital_costs = (costs.at["electrolysis", "capital_cost"] + costs.at["fuel cell", "capital_cost"] + 168 * costs.at["hydrogen storage underground", "capital_cost"])
-n.add("StorageUnit", "hydrogen storage underground", bus="electricity", carrier="hydrogen storage underground",
-      max_hours=168, capital_cost=capital_costs,
-      efficiency_store=costs.at["electrolysis", "efficiency"], efficiency_dispatch=costs.at["fuel cell", "efficiency"],
-      p_nom_extendable=True, cyclic_state_of_charge=True)
+    # Show System Cost Breakdown
+    def system_cost(n):
+        tsc = pd.concat([n.statistics.capex(), n.statistics.opex()], axis=1)
+        return tsc.sum(axis=1).droplevel(0).div(1e9).round(2)  # billion €/a
 
-# Add Emission Constraint
-n.add("GlobalConstraint", "CO2Limit", carrier_attribute="co2_emissions", sense="<=", constant=0)
-
-n.optimize(solver_name="highs")
-n.generators.p_nom_opt  # MW
-n.storage_units.p_nom_opt  # MW
-n.storage_units.p_nom_opt.div(1e3) * n.storage_units.max_hours  # GWh
-
-# Plot System Cost Breakdown
-def system_cost(n):
-    tsc = pd.concat([n.statistics.capex(), n.statistics.opex()], axis=1)
-    return tsc.sum(axis=1).droplevel(0).div(1e9).round(2)  # billion €/a
-
-system_cost(n).plot.pie(figsize=(4, 4))
-plt.show()
-
-# Export to NetCDF
-n.export_to_netcdf("network-new.nc")
+    st.subheader("System Cost Breakdown (in billion €/a)")
+    cost_df = system_cost(n)
+    fig, ax = plt.subplots()
+    cost_df.plot.pie(ax=ax, autopct='%1.1f%%', startangle=90, legend=False)
+    ax.set_ylabel("")
+    st.pyplot(fig)
+  
