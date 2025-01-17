@@ -119,6 +119,19 @@ n.add("Generator", "OCGT", bus="electricity", carrier="OCGT",
       capital_cost=costs.at["OCGT", "capital_cost"], marginal_cost=costs.at["OCGT", "marginal_cost"],
       efficiency=costs.at["OCGT", "efficiency"], p_nom_extendable=True)
 
+# Add Storage Units
+n.add("StorageUnit", "battery storage", bus="electricity", carrier="battery storage",
+      max_hours=6, capital_cost=costs.at["battery inverter", "capital_cost"] + 6 * costs.at["battery storage", "capital_cost"],
+      efficiency_store=costs.at["battery inverter", "efficiency"], efficiency_dispatch=costs.at["battery inverter", "efficiency"],
+      p_nom_extendable=True, cyclic_state_of_charge=True)
+
+# Add Hydrogen Storage
+capital_costs = (costs.at["electrolysis", "capital_cost"] + costs.at["fuel cell", "capital_cost"] + 168 * costs.at["hydrogen storage underground", "capital_cost"])
+n.add("StorageUnit", "hydrogen storage underground", bus="electricity", carrier="hydrogen storage underground",
+      max_hours=168, capital_cost=capital_costs,
+      efficiency_store=costs.at["electrolysis", "efficiency"], efficiency_dispatch=costs.at["fuel cell", "efficiency"],
+      p_nom_extendable=True, cyclic_state_of_charge=True)
+
 # Optimize Model
 st.sidebar.subheader("Run Optimization")
 if st.sidebar.button("Optimize System"):
