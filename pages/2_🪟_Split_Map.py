@@ -138,7 +138,7 @@ if st.sidebar.button("Optimize System"):
     fig, ax = plt.subplots()
     cost_df.plot.pie(ax=ax, autopct='%1.1f%%', startangle=90, legend=False)
     ax.set_ylabel("")
-st.pyplot(fig)
+    st.pyplot(fig)
 
     # Show Before and After Optimization
     st.header("Generator Capacities: Before vs After Optimization (MW)")
