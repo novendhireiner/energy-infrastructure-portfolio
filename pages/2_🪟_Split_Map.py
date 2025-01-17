@@ -3,6 +3,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
 
+st.set_page_config(layout="wide")
+
 plt.style.use("bmh")
 
 st.title("Decarbonizing Electricity Supply with PyPSA")
