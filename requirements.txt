@@ -3,4 +3,5 @@ streamlit
 pypsa
 pandas
 matplotlib
+plotly
 
