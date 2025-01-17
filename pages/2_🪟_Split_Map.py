@@ -72,11 +72,11 @@ costs["capital_cost"] = (annuity_values + costs["FOM"] / 100) * costs["investmen
 
 # Filter only selected technologies and remove rows with NaN values
 selected_techs = ["onwind", "offwind", "solar", "OCGT", "hydrogen storage underground", "battery storage"]
-costs = costs.loc[selected_techs].dropna(how='all', axis=0).dropna(how='all', axis=1)
+costs = costs.loc[selected_techs]
 
 if not costs.empty:
     st.subheader("Technology Costs Overview")
-    st.write(costs)
+    st.write(costs.dropna(how='all', axis=0).dropna(how='all', axis=1))
 
 # Load Time-Series Data
 url = "https://tubcloud.tu-berlin.de/s/pKttFadrbTKSJKF/download/time-series-lecture-2.csv"
