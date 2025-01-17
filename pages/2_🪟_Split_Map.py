@@ -72,7 +72,7 @@ costs["capital_cost"] = (annuity_values + costs["FOM"] / 100) * costs["investmen
 
 # Filter only selected technologies and remove rows with NaN values
 selected_techs = ["onwind", "offwind", "solar", "OCGT", "hydrogen storage underground", "battery storage"]
-costs = costs.loc[selected_techs].dropna(how='all')
+costs = costs.loc[selected_techs].dropna(how='all', axis=0).dropna(how='all', axis=1)
 
 if not costs.empty:
     st.subheader("Technology Costs Overview")
