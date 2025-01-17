@@ -2,8 +2,7 @@ import pypsa
 import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
-
-st.set_page_config(layout="wide")
+import plotly.express as px
 
 plt.style.use("bmh")
 
@@ -71,12 +70,13 @@ costs["marginal_cost"] = costs["VOM"] + costs["fuel"] / costs["efficiency"]
 annuity_values = costs.apply(lambda x: annuity(x["discount rate"], x["lifetime"]), axis=1)
 costs["capital_cost"] = (annuity_values + costs["FOM"] / 100) * costs["investment"]
 
-# Filter only selected technologies
+# Filter only selected technologies and remove rows with NaN values
 selected_techs = ["onwind", "offwind", "solar", "OCGT", "hydrogen storage underground", "battery storage"]
-costs = costs.loc[selected_techs]
+costs = costs.loc[selected_techs].dropna(how='all')
 
-st.subheader("Technology Costs Overview")
-st.write(costs)
+if not costs.empty:
+    st.subheader("Technology Costs Overview")
+    st.write(costs)
 
 # Load Time-Series Data
 url = "https://tubcloud.tu-berlin.de/s/pKttFadrbTKSJKF/download/time-series-lecture-2.csv"
@@ -87,16 +87,15 @@ ts = ts.resample(f"{resolution}h").first()
 
 # Show Demand Time-Series
 st.subheader("Electricity Demand Time Series")
-fig, ax = plt.subplots()
-ts.load.plot(ax=ax, figsize=(10, 4), title="Electricity Demand (MW)")
-ax.set_ylabel("MW")
-st.pyplot(fig)
+fig = px.line(ts, x=ts.index, y="load", labels={"load": "Electricity Demand (MW)", "index": "Time"})
+fig.update_layout(title="Electricity Demand Over Time", xaxis_title="Time", yaxis_title="MW", height=400)
+st.plotly_chart(fig, use_container_width=True)
 
+# Show Wind and Solar Capacity Factors 
 st.subheader("Wind and Solar Capacity Factors")
-fig, ax = plt.subplots()
-ts[["onwind", "offwind", "solar"]].plot(ax=ax, figsize=(10, 4), title="Capacity Factors")
-ax.set_ylabel("Capacity Factor")
-st.pyplot(fig)
+fig = px.line(ts, x=ts.index, y=["onwind", "offwind", "solar"], labels={"value": "Capacity Factor", "index": "Time"})
+fig.update_layout(title="Capacity Factors Over Time", xaxis_title="Time", yaxis_title="Capacity Factor", height=400)
+st.plotly_chart(fig, use_container_width=True)
 
 # Initialize Network
 n = pypsa.Network()
@@ -109,10 +108,6 @@ n.add("Carrier", selected_techs, co2_emissions=[costs.at[c, "CO2 intensity"] for
 
 # Add Loads
 n.add("Load", "demand", bus="electricity", p_set=ts.load)
-
-# Store Initial Generator Capacities Before Optimization
-initial_generator_capacities = n.generators.p_nom_opt.copy()
-initial_storage_capacities = n.storage_units.p_nom_opt.copy()
 
 # Add Generators
 for tech in selected_techs[:3]:  # Only onwind, offwind, solar
@@ -130,6 +125,13 @@ if st.sidebar.button("Optimize System"):
     n.add("GlobalConstraint", "CO2Limit", carrier_attribute="co2_emissions", sense="<=", constant=co2_limit)
     n.optimize(solver_name="highs")
 
+    # Show Optimization Results
+    st.header("Optimized Generator Capacities (MW)")
+    st.write(n.generators.p_nom_opt)
+    
+    st.header("Optimized Storage Capacities (GWh)")
+    st.write(n.storage_units.p_nom_opt * n.storage_units.max_hours / 1e3)
+
     # Show System Cost Breakdown
     def system_cost(n):
         tsc = pd.concat([n.statistics.capex(), n.statistics.opex()], axis=1)
@@ -141,28 +143,7 @@ if st.sidebar.button("Optimize System"):
     cost_df.plot.pie(ax=ax, autopct='%1.1f%%', startangle=90, legend=False)
     ax.set_ylabel("")
     st.pyplot(fig)
-
-    # Show Before and After Optimization
-    st.header("Generator Capacities: Before vs After Optimization (MW)")
-    comparison_df = pd.DataFrame({
-        "Before Optimization (MW)": initial_generator_capacities,
-        "After Optimization (MW)": n.generators.p_nom_opt
-    })
-    st.write(comparison_df)
-
-    st.header("Storage Capacities: Before vs After Optimization (GWh)")
-    storage_comparison_df = pd.DataFrame({
-        "Before Optimization (GWh)": initial_storage_capacities * n.storage_units.max_hours / 1e3,
-        "After Optimization (GWh)": n.storage_units.p_nom_opt * n.storage_units.max_hours / 1e3
-    })
-    st.write(storage_comparison_df)
-
+  
     # Save Results
     n.export_to_netcdf("network-new.nc")
     st.success("Optimization Completed! Results Saved.")
-
-st.markdown("""
-## Results Analysis
-- **Before Optimization:** Shows initial capacities before the solver runs.
-- **After Optimization:** Displays optimized capacities after the model balances cost and emissions constraints.
-""")
