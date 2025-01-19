@@ -159,9 +159,9 @@ if st.sidebar.button("Optimize System"):
         "battery storage": "yellowgreen"
     }
 
-    
     fig = px.bar(cost_df, x=cost_df.index, y=cost_df.values, labels={"x": "Technology", "y": "Cost (bn €/a)"},
-                 title="System Cost Breakdown", text=cost_df.values)
+                 title="System Cost Breakdown", text=cost_df.values,
+                 color=cost_df.index, color_discrete_map=color_mapping)
     fig.update_layout(barmode='stack', xaxis_title="Technology", yaxis_title="Cost (billion €/a)")
     st.plotly_chart(fig, use_container_width=True)
 
@@ -174,8 +174,9 @@ if st.sidebar.button("Optimize System"):
     
     fig = px.area(energy_balance, x=energy_balance.index, y=energy_balance.columns,
                   labels={"value": "Energy (GW)", "index": "Time"},
-                  title="Optimal Energy Dispatch Over Time")
-    fig.update_layout(xaxis_title="Time", yaxis_title="Energy (GW)", height=400)
+                  title="Optimal Energy Dispatch Over Time",
+                  color=energy_balance.columns, color_discrete_map=color_mapping)
+    fig.update_layout(xaxis_title="Time", yaxis_title="Energy (GW)", height=500)
     st.plotly_chart(fig, use_container_width=True)
   
     # Save Results
