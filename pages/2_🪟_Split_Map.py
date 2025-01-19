@@ -234,6 +234,8 @@ if st.sidebar.button("Optimize System"):
         )
     
         st.plotly_chart(fig, use_container_width=True)
+    # Call the plot_dispatch function to show the energy dispatch chart
+    plot_dispatch(n)
     
     # Save Results
     #n.export_to_netcdf("network-new.nc")
