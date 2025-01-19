@@ -3,6 +3,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import streamlit as st
 import plotly.express as px
+import plotly.graph_object as go
 
 plt.style.use("bmh")
 
@@ -172,23 +173,68 @@ if st.sidebar.button("Optimize System"):
     st.plotly_chart(fig, use_container_width=True)
 
     # Show Energy Dispatch Chart
-    st.subheader("Energy Dispatch Over Time")
-    energy_balance = (
+    def plot_dispatch(n):
+    # Prepare energy balance data
+    p = (
         n.statistics.energy_balance(aggregate_time=False)
-        .groupby("carrier").sum().div(1e3).drop("-").T
+        .groupby("carrier")
+        .sum()
+        .div(1e3)
+        .drop("-")
+        .T
     )
 
-    # Convert energy balance to long format for Plotly
-    energy_balance_long = energy_balance.reset_index().melt(id_vars="index", var_name="Technology", value_name="Energy (GW)")
+    # Create figure using Plotly
+    fig = go.Figure()
+
+    # Plot positive values (generation)
+    for carrier in p.columns:
+        generation = p[carrier][p[carrier] > 0]
+        if not generation.empty:
+            fig.add_trace(go.Scatter(
+                x=generation.index,
+                y=generation.values,
+                fill='tonexty',
+                mode='none',
+                name=carrier,
+                fillcolor=color_mapping.get(carrier, 'gray'),  # Use the color mapping
+            ))
+
+    # Plot negative values (charge/discharge)
+    for carrier in p.columns:
+        charge = p[carrier][p[carrier] < 0]
+        if not charge.empty:
+            fig.add_trace(go.Scatter(
+                x=charge.index,
+                y=charge.values,
+                fill='tonexty',
+                mode='none',
+                name=carrier,
+                fillcolor=color_mapping.get(carrier, 'gray'),  # Use the color mapping
+                showlegend=False  # Don't include charge in legend if you don't want it
+            ))
+
+    # Plot total load (as black line)
+    total_load = n.loads_t.p_set.sum(axis=1) / 1e3  # In GW
+    fig.add_trace(go.Scatter(
+        x=total_load.index,
+        y=total_load.values,
+        mode='lines',
+        name="Load",
+        line=dict(color='black', width=2)
+    ))
+
+    # Customize layout
+    fig.update_layout(
+        title="Energy Dispatch Over Time",
+        xaxis_title="Time",
+        yaxis_title="Energy (GW)",
+        showlegend=True,
+        height=500
+    )
     
-    fig = px.area(energy_balance_long, x="index", y="Energy (GW)", color="Technology",
-              labels={"index": "Time", "Energy (GW)": "Energy (GW)"},
-              title="Optimal Energy Dispatch Over Time",
-              color_discrete_map=color_mapping)
-    
-    fig.update_layout(xaxis_title="Time", yaxis_title="Energy (GW)", height=500)
     st.plotly_chart(fig, use_container_width=True)
     
     # Save Results
-    n.export_to_netcdf("network-new.nc")
-    st.success("Optimization Completed! Results Saved.")
+    #n.export_to_netcdf("network-new.nc")
+    #st.success("Optimization Completed! Results Saved.")
