@@ -145,17 +145,18 @@ if st.sidebar.button("Optimize System"):
     st.header("Optimized Storage Capacities (GWh)")
     st.write(n.storage_units.p_nom_opt * n.storage_units.max_hours / 1e3)
 
-    # Show System Cost Breakdown
+    # Show System Cost Breakdown with Stackable Bar Chart
     def system_cost(n):
         tsc = pd.concat([n.statistics.capex(), n.statistics.opex()], axis=1)
         return tsc.sum(axis=1).droplevel(0).div(1e9).round(2)  # billion €/a
 
     st.subheader("System Cost Breakdown (in billion €/a)")
     cost_df = system_cost(n)
-    fig, ax = plt.subplots()
-    cost_df.plot.pie(ax=ax, autopct='%1.1f%%', startangle=90, legend=False)
-    ax.set_ylabel("")
-    st.pyplot(fig)
+    
+    fig = px.bar(cost_df, x=cost_df.index, y=cost_df.values, labels={"x": "Technology", "y": "Cost (bn €/a)"},
+                 title="System Cost Breakdown", text=cost_df.values)
+    fig.update_layout(barmode='stack', xaxis_title="Technology", yaxis_title="Cost (billion €/a)")
+    st.plotly_chart(fig, use_container_width=True)
   
     # Save Results
     n.export_to_netcdf("network-new.nc")
