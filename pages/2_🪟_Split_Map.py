@@ -178,16 +178,17 @@ if st.sidebar.button("Optimize System"):
         .groupby("carrier").sum().div(1e3).drop("-").T
     )
 
-    # Convert column names to strings for Plotly
-    energy_balance.columns = energy_balance.columns.astype(str)
-
-    fig = px.area(energy_balance, x=energy_balance.index, y=energy_balance.columns,
-                  labels={"value": "Energy (GW)", "index": "Time"},
-                  title="Optimal Energy Dispatch Over Time",
-                  color=energy_balance.columns, color_discrete_map=color_mapping)
+    # Convert energy balance to long format for Plotly
+    energy_balance_long = energy_balance.reset_index().melt(id_vars="index", var_name="Technology", value_name="Energy (GW)")
+    
+    fig = px.area(energy_balance_long, x="index", y="Energy (GW)", color="Technology",
+              labels={"index": "Time", "Energy (GW)": "Energy (GW)"},
+              title="Optimal Energy Dispatch Over Time",
+              color_discrete_map=color_mapping)
+    
     fig.update_layout(xaxis_title="Time", yaxis_title="Energy (GW)", height=500)
     st.plotly_chart(fig, use_container_width=True)
-  
+    
     # Save Results
     n.export_to_netcdf("network-new.nc")
     st.success("Optimization Completed! Results Saved.")
