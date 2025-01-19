@@ -110,6 +110,34 @@ fig = px.line(ts_melted, x="index", y="Capacity Factor", color="Technology",
 fig.update_layout(xaxis_title="Time", yaxis_title="Capacity Factor", height=400)
 st.plotly_chart(fig, use_container_width=True)
 
+# Sensitivity Analysis Logic
+def run_sensitivity_analysis(co2_range, solar_cost_range, offshore_wind_range):
+    sensitivity = {}
+    
+    # Create a range of CO2 limits for analysis
+    co2_values = [co2_range * 1e6]  # Using the selected CO2 limit as example
+
+    # Solar and Offshore Wind variations
+    solar_cost_values = [solar_cost_range]  # Using the selected solar cost for analysis
+    offshore_wind_values = [offshore_wind_range]  # Using the selected offshore wind capacity factor
+
+    # Loop over each variation in parameters
+    for co2 in co2_values:
+        for solar_cost in solar_cost_values:
+            for offshore_wind in offshore_wind_values:
+                # Apply the sensitivity changes to the network
+                n.global_constraints.loc["CO2Limit", "constant"] = co2
+                costs.at["solar", "capital_cost"] = solar_cost * 1e3  # Adjust solar overnight cost
+                ts["offwind"] = offshore_wind  # Adjust offshore wind capacity factor
+                n.optimize(solver_name="highs")
+                # Record the system cost results
+                sensitivity[(co2, solar_cost, offshore_wind)] = system_cost(n)
+
+    # Convert the results into a DataFrame
+    df = pd.DataFrame(sensitivity).T
+    return df
+
+
 # Initialize Network
 n = pypsa.Network()
 n.add("Bus", "electricity")
@@ -240,3 +268,25 @@ if st.sidebar.button("Optimize System"):
     # Save Results
     #n.export_to_netcdf("network-new.nc")
     #st.success("Optimization Completed! Results Saved.")
+
+# Run Sensitivity Analysis when the button is clicked
+st.sidebar.subheader("Run Sensitivity Analysis")
+
+if st.sidebar.button("Run Sensitivity Analysis"):
+    df_sensitivity = run_sensitivity_analysis(co2_range, solar_cost_range, offshore_wind_range)
+    
+    # Display Sensitivity Results
+    st.subheader("Sensitivity Analysis Results")
+    
+    # Plotting the area chart using Plotly for interactive visualization
+    fig = px.area(df_sensitivity, 
+                  x=df_sensitivity.index, 
+                  y=df_sensitivity.columns,
+                  labels={"x": "Scenario", "y": "Cost (bn €/a)"},
+                  title="Sensitivity Analysis on System Cost")
+    
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Display the DataFrame as a table
+    st.write("Sensitivity Data (System Cost over different scenarios):")
+    st.dataframe(df_sensitivity)
