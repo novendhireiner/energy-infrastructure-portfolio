@@ -175,65 +175,65 @@ if st.sidebar.button("Optimize System"):
     # Show Energy Dispatch Chart
     def plot_dispatch(n):
     # Prepare energy balance data
-    p = (
-        n.statistics.energy_balance(aggregate_time=False)
-        .groupby("carrier")
-        .sum()
-        .div(1e3)
-        .drop("-")
-        .T
-    )
+        p = (
+            n.statistics.energy_balance(aggregate_time=False)
+            .groupby("carrier")
+            .sum()
+            .div(1e3)
+            .drop("-")
+            .T
+        )
 
-    # Create figure using Plotly
-    fig = go.Figure()
+        # Create figure using Plotly
+        fig = go.Figure()
 
-    # Plot positive values (generation)
-    for carrier in p.columns:
-        generation = p[carrier][p[carrier] > 0]
-        if not generation.empty:
-            fig.add_trace(go.Scatter(
-                x=generation.index,
-                y=generation.values,
-                fill='tonexty',
-                mode='none',
-                name=carrier,
-                fillcolor=color_mapping.get(carrier, 'gray'),  # Use the color mapping
-            ))
+        # Plot positive values (generation)
+        for carrier in p.columns:
+            generation = p[carrier][p[carrier] > 0]
+            if not generation.empty:
+                fig.add_trace(go.Scatter(
+                    x=generation.index,
+                    y=generation.values,
+                    fill='tonexty',
+                    mode='none',
+                    name=carrier,
+                    fillcolor=color_mapping.get(carrier, 'gray'),  # Use the color mapping
+                ))
 
-    # Plot negative values (charge/discharge)
-    for carrier in p.columns:
-        charge = p[carrier][p[carrier] < 0]
-        if not charge.empty:
-            fig.add_trace(go.Scatter(
-                x=charge.index,
-                y=charge.values,
-                fill='tonexty',
-                mode='none',
-                name=carrier,
-                fillcolor=color_mapping.get(carrier, 'gray'),  # Use the color mapping
-                showlegend=False  # Don't include charge in legend if you don't want it
-            ))
+        # Plot negative values (charge/discharge)
+        for carrier in p.columns:
+            charge = p[carrier][p[carrier] < 0]
+            if not charge.empty:
+                fig.add_trace(go.Scatter(
+                    x=charge.index,
+                    y=charge.values,
+                    fill='tonexty',
+                    mode='none',
+                    name=carrier,
+                    fillcolor=color_mapping.get(carrier, 'gray'),  # Use the color mapping
+                    showlegend=False  # Don't include charge in legend if you don't want it
+                ))
 
-    # Plot total load (as black line)
-    total_load = n.loads_t.p_set.sum(axis=1) / 1e3  # In GW
-    fig.add_trace(go.Scatter(
-        x=total_load.index,
-        y=total_load.values,
-        mode='lines',
-        name="Load",
-        line=dict(color='black', width=2)
-    ))
+        # Plot total load (as black line)
+        total_load = n.loads_t.p_set.sum(axis=1) / 1e3  # In GW
+        fig.add_trace(go.Scatter(
+            x=total_load.index,
+            y=total_load.values,
+            mode='lines',
+            name="Load",
+            line=dict(color='black', width=2)
+        ))
 
-    # Customize layout
-    fig.update_layout(
-        title="Energy Dispatch Over Time",
-        xaxis_title="Time",
-        yaxis_title="Energy (GW)",
-        showlegend=True,
-        height=500
-    )
+        # Customize layout
+        fig.update_layout(
+            title="Energy Dispatch Over Time",
+            xaxis_title="Time",
+            yaxis_title="Energy (GW)",
+            showlegend=True,
+            height=500
+        )
     
-    st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True)
     
     # Save Results
     #n.export_to_netcdf("network-new.nc")
