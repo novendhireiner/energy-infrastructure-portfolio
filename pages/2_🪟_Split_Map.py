@@ -74,6 +74,12 @@ costs["capital_cost"] = (annuity_values + costs["FOM"] / 100) * costs["investmen
 selected_techs = ["onwind", "offwind", "solar", "OCGT", "hydrogen storage underground", "battery storage", "battery inverter", "electrolysis", "fuel cell"]
 costs = costs.loc[selected_techs]
 
+color_mapping = {
+        "onwind": "dodgerblue", "offwind": "aquamarine", "solar": "gold",
+        "OCGT": "indianred", "hydrogen storage underground": "magenta",
+        "battery storage": "yellowgreen"
+}
+
 if not costs.empty:
     st.subheader("Technology Costs Overview")
     st.write(costs.dropna(how='all', axis=0).dropna(how='all', axis=1))
@@ -93,7 +99,8 @@ st.plotly_chart(fig, use_container_width=True)
 
 # Show Wind and Solar Capacity Factors 
 st.subheader("Wind and Solar Capacity Factors")
-fig = px.line(ts, x=ts.index, y=["onwind", "offwind", "solar"], labels={"value": "Capacity Factor", "index": "Time"})
+fig = px.line(ts, x=ts.index, y=["onwind", "offwind", "solar"], labels={"value": "Capacity Factor", "index": "Time"},
+             color=ts.index, color_discrete_map=color_mapping)
 fig.update_layout(title="Capacity Factors Over Time", xaxis_title="Time", yaxis_title="Capacity Factor", height=400)
 st.plotly_chart(fig, use_container_width=True)
 
@@ -153,12 +160,6 @@ if st.sidebar.button("Optimize System"):
     st.subheader("System Cost Breakdown (in billion €/a)")
     cost_df = system_cost(n)
 
-    color_mapping = {
-        "onwind": "dodgerblue", "offwind": "aquamarine", "solar": "gold",
-        "OCGT": "indianred", "hydrogen storage underground": "magenta",
-        "battery storage": "yellowgreen"
-    }
-
     fig = px.bar(cost_df, x=cost_df.index, y=cost_df.values, labels={"x": "Technology", "y": "Cost (bn €/a)"},
                  title="System Cost Breakdown", text=cost_df.values,
                  color=cost_df.index, color_discrete_map=color_mapping)
@@ -171,7 +172,10 @@ if st.sidebar.button("Optimize System"):
         n.statistics.energy_balance(aggregate_time=False)
         .groupby("carrier").sum().div(1e3).drop("-").T
     )
-    
+
+    # Convert column names to strings for Plotly
+    energy_balance.columns = energy_balance.columns.astype(str)
+
     fig = px.area(energy_balance, x=energy_balance.index, y=energy_balance.columns,
                   labels={"value": "Energy (GW)", "index": "Time"},
                   title="Optimal Energy Dispatch Over Time",
