@@ -152,10 +152,30 @@ if st.sidebar.button("Optimize System"):
 
     st.subheader("System Cost Breakdown (in billion €/a)")
     cost_df = system_cost(n)
+
+    color_mapping = {
+        "onwind": "dodgerblue", "offwind": "aquamarine", "solar": "gold",
+        "OCGT": "indianred", "hydrogen storage underground": "magenta",
+        "battery storage": "yellowgreen"
+    }
+
     
     fig = px.bar(cost_df, x=cost_df.index, y=cost_df.values, labels={"x": "Technology", "y": "Cost (bn €/a)"},
                  title="System Cost Breakdown", text=cost_df.values)
     fig.update_layout(barmode='stack', xaxis_title="Technology", yaxis_title="Cost (billion €/a)")
+    st.plotly_chart(fig, use_container_width=True)
+
+    # Show Energy Dispatch Chart
+    st.subheader("Energy Dispatch Over Time")
+    energy_balance = (
+        n.statistics.energy_balance(aggregate_time=False)
+        .groupby("carrier").sum().div(1e3).drop("-").T
+    )
+    
+    fig = px.area(energy_balance, x=energy_balance.index, y=energy_balance.columns,
+                  labels={"value": "Energy (GW)", "index": "Time"},
+                  title="Optimal Energy Dispatch Over Time")
+    fig.update_layout(xaxis_title="Time", yaxis_title="Energy (GW)", height=400)
     st.plotly_chart(fig, use_container_width=True)
   
     # Save Results
