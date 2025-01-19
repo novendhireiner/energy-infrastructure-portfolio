@@ -99,9 +99,14 @@ st.plotly_chart(fig, use_container_width=True)
 
 # Show Wind and Solar Capacity Factors 
 st.subheader("Wind and Solar Capacity Factors")
-fig = px.line(ts, x=ts.index, y=["onwind", "offwind", "solar"], labels={"value": "Capacity Factor", "index": "Time"},
-             color=ts.index, color_discrete_map=color_mapping)
-fig.update_layout(title="Capacity Factors Over Time", xaxis_title="Time", yaxis_title="Capacity Factor", height=400)
+ts_filtered = ts[["onwind", "offwind", "solar"]].reset_index()
+ts_melted = ts_filtered.melt(id_vars="index", var_name="Technology", value_name="Capacity Factor")
+
+fig = px.line(ts_melted, x="index", y="Capacity Factor", color="Technology",
+              labels={"index": "Time", "Capacity Factor": "Capacity Factor"},
+              title="Wind and Solar Capacity Factors Over Time",
+              color_discrete_map=color_mapping)
+fig.update_layout(xaxis_title="Time", yaxis_title="Capacity Factor", height=400)
 st.plotly_chart(fig, use_container_width=True)
 
 # Initialize Network
