@@ -4,7 +4,7 @@ st.set_page_config(layout="wide")
 
 # Customize the sidebar
 markdown = """
-Regional Grid Expansion Model in Germany
+Energy Infrastructure Portfolio
 """
 
 st.sidebar.title("About")
@@ -12,73 +12,49 @@ st.sidebar.info(markdown)
 logo = "data/grid.png"
 st.sidebar.image(logo)
 
-# Customize page title
-st.title("🇩🇪 Germany Energy Grid Optimization with PyPSA & Streamlit")
+st.title("🚀 Welcome to My Portfolio!")
 
-st.markdown(
-    """
-    📢 **Author:** Novendhi Reiner Maturbongs 
-    📅 **Date:** _January 2025_  
-    🔧 **Technologies:** PyPSA, Python, Streamlit, Pandas, Matplotlib  
-    """
-)
+st.write("""
+## 👋 Hi, I'm **Novendhi Reiner Maturbongs**  
+A **Data Analyst** with a background in **industrial engineering and energy systems**, I bring a unique blend of **engineering expertise, data analytics, and energy sector knowledge** to help drive sustainable power solutions.  
+""")
 
-st.header("🌍 Project Overview")
-st.markdown(
-    """
-    This project models and optimizes **Germany’s electricity system** using **PyPSA** (Python for Power System Analysis). It allows users to:
-    
-    ✅ Adjust **CO₂ emission limits**  
-    ✅ Modify **transmission expansion costs**  
-    ✅ Optimize **renewable energy generation & grid capacity**  
-    ✅ Analyze **energy dispatch & system costs**  
-    ✅ Perform **sensitivity analysis on CO₂ policies**  
-    
-    The optimization **minimizes total system costs** while satisfying electricity demand using renewables (solar, wind) and transmission expansion.
-    
-    """
-)
+st.write("""
+### 🎓 Education & Background  
+I hold an **M.Sc. in Business Administration and Engineering (Energy Systems)** from **Brandenburg Technical University Cottbus-Senftenberg** and have hands-on experience working in:  
+- **Power plant operations and data analysis**  
+- **Energy storage safety and risk assessments**  
+- **Statistical evaluation of operational data**  
 
-st.header("🎛️ How to Use the Streamlit App ")
-st.markdown(
-    """
-    1. **Set Inputs in Sidebar**  
-       - Adjust **CO₂ emission limit** (0-200 Mt).  
-       - Modify **transmission expansion costs** (€ / MW/km).  
-    2. **Optimize the Energy System**  
-       - The model **solves for least-cost generation & transmission**.  
-    3. **Analyze the Results**  
-       - View **optimized renewable & grid capacities**.  
-       - Explore **energy dispatch over time**.  
-    4. **Run Sensitivity Analysis**  
-       - See how **CO₂ limits affect system cost**.  
-    """
-)
+Over the years, I’ve transitioned into **data analytics**, leveraging **Python, R, SQL, and BI tools** like **Power BI, Tableau, and Looker Studio** to extract insights and optimize energy systems.  
+""")
 
-st.header("📊 Model Features")
-st.markdown(
-    """
-    1. Load Real-World Germany Energy Data  
-        ✅ Uses **demand & renewable time-series** from [Germany 2015 dataset](https://tubcloud.tu-berlin.de/s/pKttFadrbTKSJKF/download).  
-        ✅ **Resampled to 4-hour intervals** to reduce computation time.  
+st.write("""
+### 🔍 Current Focus  
+I'm currently advancing my skills in **Agile Data Analytics**, with expertise in:  
+✅ **Machine learning & data science** (Pandas, NumPy, Scikit-learn, PyTorch)  
+✅ **Data visualization & BI tools** (Power BI, Tableau, Looker Studio)  
+✅ **Project management & Agile methodologies** (Scrum, Six Sigma)  
+""")
 
-    2. Divide Germany into 3 Energy Regions  
+st.write("""
+### 💡 What You’ll Find Here  
+This portfolio showcases **real-world case studies, interactive visualizations, and analytical projects** demonstrating my expertise in:
+🚗 **Electromobility & Charging Infrastructure Analysis**  
+   - **Berlin's charging station network**: Explore the current EV charging infrastructure.  
+   - **Optimal new locations**: Identify potential charging station sites near transportation hubs.  
+   - **Interactive data filtering**: Analyze stations by district and charging capacity.  
 
-        | Region  | % of Demand | Renewable Strength |
-        |---------|------------|--------------------|
-        | **North**  | 30%  | Strong **wind** |
-        | **Central** | 40%  | Balanced |
-        | **South**  | 30%  | Strong **solar** |
+📊 **Capacity expansion planning** with Renewable integration & power system optimization
 
-    3. Optimize Generation & Grid Expansion  
-        ✅ **Renewables:** Wind & solar can **scale** dynamically.  
-        ✅ **Grid Transmission:** Optimized **transmission expansion** costs.  
-        ✅ **CO₂ Constraints:** Users can **limit emissions** to meet climate targets.  
+st.write("### 📬 Let's Connect!")
 
-    4. Visualize Energy Dispatch  
-        📊 **Stacked area plots** show how **each technology supplies demand** over time.  
+st.markdown("""
+📧 **Email**: [novendhi.reiner@gmail.com](mailto:novendhi.reiner@gmail.com)  
+🔗 **GitHub**: [novendhireiner](https://github.com/novendhireiner)  
+💼 **LinkedIn**: [LinkedIn Profile](https://www.linkedin.com/in/nrmaturbongs)
+🎓 **Certifications**: [Scrum Master Certification](https://scrum.org/certificates/1089070)  
+""")
 
-    5. Sensitivity Analysis  
-        📈 Users can **test different CO₂ limits** and analyze system costs.  
-    """
-)
+st.write("Feel free to reach out to discuss data analytics, energy infrastructure, or potential collaborations! 🚀")
+""")
