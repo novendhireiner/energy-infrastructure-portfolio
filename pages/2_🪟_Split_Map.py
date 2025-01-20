@@ -106,34 +106,6 @@ fig = px.line(ts_melted, x="index", y="Capacity Factor", color="Technology",
 fig.update_layout(xaxis_title="Time", yaxis_title="Capacity Factor", height=400)
 st.plotly_chart(fig, use_container_width=True)
 
-# Sensitivity Analysis Logic
-def run_sensitivity_analysis(co2_range, solar_cost_range, offshore_wind_range):
-    sensitivity = {}
-    
-    # Create a range of CO2 limits for analysis
-    co2_values = [co2_range * 1e6]  # Using the selected CO2 limit as example
-
-    # Solar and Offshore Wind variations
-    solar_cost_values = [solar_cost_range]  # Using the selected solar cost for analysis
-    offshore_wind_values = [offshore_wind_range]  # Using the selected offshore wind capacity factor
-
-    # Loop over each variation in parameters
-    for co2 in co2_values:
-        for solar_cost in solar_cost_values:
-            for offshore_wind in offshore_wind_values:
-                # Apply the sensitivity changes to the network
-                n.global_constraints.loc["CO2Limit", "constant"] = co2
-                costs.at["solar", "capital_cost"] = solar_cost * 1e3  # Adjust solar overnight cost
-                ts["offwind"] = offshore_wind  # Adjust offshore wind capacity factor
-                n.optimize(solver_name="highs")
-                # Record the system cost results
-                sensitivity[(co2, solar_cost, offshore_wind)] = system_cost(n)
-
-    # Convert the results into a DataFrame
-    df = pd.DataFrame(sensitivity).T
-    return df
-
-
 # Initialize Network
 n = pypsa.Network()
 n.add("Bus", "electricity")
@@ -169,6 +141,10 @@ n.add("StorageUnit", "hydrogen storage underground", bus="electricity", carrier=
       efficiency_store=costs.at["electrolysis", "efficiency"], efficiency_dispatch=costs.at["fuel cell", "efficiency"],
       p_nom_extendable=True, cyclic_state_of_charge=True)
 
+def system_cost(n):
+    tsc = pd.concat([n.statistics.capex(), n.statistics.opex()], axis=1)
+    return tsc.sum(axis=1).droplevel(0).div(1e9).round(2)  # billion €/a
+    
 # Optimize Model
 st.sidebar.subheader("Run Optimization")
 if st.sidebar.button("Optimize System"):
@@ -183,10 +159,6 @@ if st.sidebar.button("Optimize System"):
     st.write(n.storage_units.p_nom_opt * n.storage_units.max_hours / 1e3)
 
     # Show System Cost Breakdown with Stackable Bar Chart
-    def system_cost(n):
-        tsc = pd.concat([n.statistics.capex(), n.statistics.opex()], axis=1)
-        return tsc.sum(axis=1).droplevel(0).div(1e9).round(2)  # billion €/a
-
     st.subheader("System Cost Breakdown (in billion €/a)")
     cost_df = system_cost(n)
 
