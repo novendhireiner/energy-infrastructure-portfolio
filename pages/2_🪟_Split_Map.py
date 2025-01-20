@@ -230,14 +230,14 @@ if st.sidebar.button("Optimize System"):
         )
     
         st.plotly_chart(fig, use_container_width=True)
-    # Call the plot_dispatch function to show the energy dispatch chart
+        
     plot_dispatch(n)
     
     # Save Results
     #n.export_to_netcdf("network-new.nc")
     #st.success("Optimization Completed! Results Saved.")
 
-    # Run Sensitivity Analysis when the options is clicked
+    # Run Sensitivity Analysis 
     all_co2_values = [0, 25, 50, 100, 150, 200]
     
     # Sensitivity Analysis
@@ -248,9 +248,9 @@ if st.sidebar.button("Optimize System"):
         sensitivity[co2] = system_cost(n)
     
     df = pd.DataFrame(sensitivity).T  # Convert to DataFrame
-    
-    # Plot using Plotly
+
     fig = px.area(df, x=df.index, y=df.columns, title="System Cost vs CO₂ Emissions",
-                  labels={"index": "CO₂ Emissions (MtCO₂)", "value": "System Cost (bn€/a)"})
+                  labels={"index": "CO₂ Emissions (MtCO₂)", "value": "System Cost (bn€/a)"},
+                 color=df.index, color_discrete_map=color_mapping)
     fig.update_layout(xaxis_title="CO₂ Emissions (MtCO₂)", yaxis_title="System Cost (bn€/a)")
     st.plotly_chart(fig, use_container_width=True)
