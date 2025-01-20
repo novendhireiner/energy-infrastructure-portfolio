@@ -9,6 +9,15 @@ import geopandas as gpd
 # ---- Streamlit Konfiguration ----
 st.set_page_config(layout="wide")
 
+markdown = """
+Berlin Ladeinfrastruktur
+"""
+
+st.sidebar.title("About")
+st.sidebar.info(markdown)
+logo = "data/grid.png"
+st.sidebar.image(logo)
+
 # ---- Daten einlesen ----
 @st.cache_data
 def load_data():
@@ -18,12 +27,6 @@ def load_data():
     # Koordinaten korrigieren
     df['Breitengrad'] = df['Breitengrad'].str.replace(',', '.').astype(float)
     df['Längengrad'] = df['Längengrad'].str.replace(',', '.').astype(float)
-
-    # Überprüfen auf fehlende Werte
-    missing_coords = df[df[['Breitengrad', 'Längengrad']].isna().any(axis=1)]
-    if not missing_coords.empty:
-        st.warning(f"{len(missing_coords)} Ladestationen haben fehlende Koordinaten und werden übersprungen.")
-        st.write(missing_coords)  # Debugging
 
     # Nur vollständige Daten verwenden
     valid_df = df.dropna(subset=['Breitengrad', 'Längengrad'])
@@ -54,12 +57,26 @@ gdf_ladesaeulen = gpd.GeoDataFrame(valid_df, geometry='geometry', crs="EPSG:4326
 
 # ---- Streamlit App ----
 st.title("Analyse der Ladeinfrastruktur in Berlin")
-st.markdown(
-    """
-    Diese App bietet eine Analyse der Ladeinfrastruktur für Elektrofahrzeuge in Berlin.
-    Sie können bestehende Ladestationen und berechnete Stationen in der Nähe von Verkehrsknotenpunkten visualisieren mit Pufferzone auf 500m.
-    """
-)
+st.markdown('''
+Die Elektromobilität spielt eine zentrale Rolle in der nachhaltigen Stadtentwicklung Berlins. Eine gut ausgebaute Ladeinfrastruktur ist essenziell, um die Nutzung von Elektrofahrzeugen zu fördern und die Klimaziele der Stadt zu erreichen. Diese interaktive Anwendung bietet eine umfassende Analyse der aktuellen Ladeinfrastruktur in Berlin. Sie zeigt nicht nur bestehende Ladestationen, sondern berechnet auch potenzielle neue Standorte in der Nähe von Verkehrsknotenpunkten, um eine optimale Abdeckung zu gewährleisten.
+
+Die Anwendung nutzt verschiedene Datensätze, darunter das Berliner Ladesäulenregister, geographische Bezirksdaten und OpenStreetMap-Verkehrsdaten. Durch interaktive Filtermöglichkeiten können Benutzer die Ladestationen nach Bezirken oder Ladeleistung selektieren und so gezielte Analysen durchführen.
+''')
+
+st.markdown('''
+## Bedienungsanleitung
+Um die gewünschten Informationen zu erhalten, folgen Sie diesen Schritten:
+
+1. **Bezirk auswählen** aus dem Dropdown-Menü, um die Ladestationen in diesem Gebiet anzuzeigen. Alternativ können Sie alle Bezirke betrachten.
+
+2. **Filteroptionen nutzen** für Schnellladestationen (mindestens 50 kW)
+
+3. **Verkehrsnahe Ladestationen anzeigen**: Die App berechnet potenzielle Standorte für neue Ladestationen anhand von Verkehrsknotenpunkten. Sie können entscheiden, ob Sie diese zusätzlich zu den bestehenden Ladestationen auf der Karte sehen möchten.
+
+4. **Karte erkunden**: Die interaktive Karte zeigt die Ladestationen in Berlin. Bestehende Ladestationen werden in Blau dargestellt, während neu berechnete Standorte rot markiert sind. Durch Anklicken erhalten Sie detaillierte Informationen zu Betreiber, Ladeleistung und Standort.
+
+5. **Analyseergebnisse betrachten**: Unterhalb der Karte finden Sie eine Zusammenfassung mit der Anzahl der aktuell sichtbaren Ladestationen und weiteren relevanten Informationen.
+''')
 
 # Bezirksauswahl hinzufügen
 selected_bezirk = st.selectbox(
