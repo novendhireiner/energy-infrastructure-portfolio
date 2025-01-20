@@ -39,6 +39,7 @@ I'm currently advancing my skills in **Agile Data Analytics**, with expertise in
 st.write("""
 ### 💡 What You’ll Find Here  
 This portfolio showcases **real-world case studies, interactive visualizations, and analytical projects** demonstrating my expertise in:
+
 🚗 **Electromobility & Charging Infrastructure Analysis**  
    - **Berlin's charging station network**: Explore the current EV charging infrastructure.  
    - **Optimal new locations**: Identify potential charging station sites near transportation hubs.  
