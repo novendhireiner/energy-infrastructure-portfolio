@@ -238,17 +238,14 @@ if st.sidebar.button("Optimize System"):
     #st.success("Optimization Completed! Results Saved.")
 
     # Run Sensitivity Analysis when the options is clicked
-    st.sidebar.subheader("Sensitivity Analysis Settings")
     all_co2_values = [0, 25, 50, 100, 150, 200]
-    co2_values_sa = st.sidebar.multiselect("Select CO₂ Limits (MtCO₂)", all_co2_values, default=all_co2_values)
     
     # Sensitivity Analysis
     sensitivity = {}
-    if st.sidebar.button("Run Sensitivity Analysis"):
-        for co2 in co2_values_sa:
-            n.global_constraints.loc["CO2Limit", "constant"] = co2 * 1e6
-            n.optimize(solver_name="highs")
-            sensitivity[co2] = system_cost(n)
+    for co2 in all_co2_values:
+        n.global_constraints.loc["CO2Limit", "constant"] = co2 * 1e6
+        n.optimize(solver_name="highs")
+        sensitivity[co2] = system_cost(n)
     
     df = pd.DataFrame(sensitivity).T  # Convert to DataFrame
     
@@ -257,5 +254,3 @@ if st.sidebar.button("Optimize System"):
                   labels={"index": "CO₂ Emissions (MtCO₂)", "value": "System Cost (bn€/a)"})
     fig.update_layout(xaxis_title="CO₂ Emissions (MtCO₂)", yaxis_title="System Cost (bn€/a)")
     st.plotly_chart(fig, use_container_width=True)
-
-st.write("Select CO₂ limits and run sensitivity analysis to see the cost variations.")
