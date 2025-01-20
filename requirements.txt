@@ -4,4 +4,8 @@ pypsa
 pandas
 matplotlib
 plotly
-
+geopandas
+shapely
+streamlit_folium
+folium
+osmnx
