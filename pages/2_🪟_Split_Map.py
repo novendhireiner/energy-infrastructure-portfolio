@@ -265,24 +265,25 @@ if st.sidebar.button("Optimize System"):
     #n.export_to_netcdf("network-new.nc")
     #st.success("Optimization Completed! Results Saved.")
 
-# Run Sensitivity Analysis when the button is clicked
-st.sidebar.subheader("Run Sensitivity Analysis")
-
+# Run Sensitivity Analysis when the options is clicked
+st.sidebar.subheader("Sensitivity Analysis Settings")
+all_co2_values = [0, 25, 50, 100, 150, 200]
+co2_values_sa = st.sidebar.multiselect("Select CO₂ Limits (MtCO₂)", all_co2_values, default=all_co2_values)
+    
+# Sensitivity Analysis
+sensitivity = {}
 if st.sidebar.button("Run Sensitivity Analysis"):
-    df_sensitivity = run_sensitivity_analysis(co2_range, solar_cost_range, offshore_wind_range)
+    for co2 in co2_values_sa:
+        n.global_constraints.loc["CO2Limit", "constant"] = co2 * 1e6
+        n.optimize(solver_name="highs")
+        sensitivity[co2] = system_cost(n)
     
-    # Display Sensitivity Results
-    st.subheader("Sensitivity Analysis Results")
+    df = pd.DataFrame(sensitivity).T  # Convert to DataFrame
     
-    # Plotting the area chart using Plotly for interactive visualization
-    fig = px.area(df_sensitivity, 
-                  x=df_sensitivity.index, 
-                  y=df_sensitivity.columns,
-                  labels={"x": "Scenario", "y": "Cost (bn €/a)"},
-                  title="Sensitivity Analysis on System Cost")
-    
+    # Plot using Plotly
+    fig = px.area(df, x=df.index, y=df.columns, title="System Cost vs CO₂ Emissions",
+                  labels={"index": "CO₂ Emissions (MtCO₂)", "value": "System Cost (bn€/a)"})
+    fig.update_layout(xaxis_title="CO₂ Emissions (MtCO₂)", yaxis_title="System Cost (bn€/a)")
     st.plotly_chart(fig, use_container_width=True)
 
-    # Display the DataFrame as a table
-    st.write("Sensitivity Data (System Cost over different scenarios):")
-    st.dataframe(df_sensitivity)
+st.write("Select CO₂ limits and run sensitivity analysis to see the cost variations.")
