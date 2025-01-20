@@ -2,7 +2,6 @@ import streamlit as st
 
 st.set_page_config(layout="wide")
 
-# Customize the sidebar
 markdown = """
 Energy Infrastructure Portfolio
 """
@@ -45,16 +44,16 @@ This portfolio showcases **real-world case studies, interactive visualizations, 
    - **Optimal new locations**: Identify potential charging station sites near transportation hubs.  
    - **Interactive data filtering**: Analyze stations by district and charging capacity.  
 
-📊 **Capacity expansion planning** with Renewable integration & power system optimization
+📊 **Capacity expansion planning** with Renewable integration & power system optimization  
+""")
 
 st.write("### 📬 Let's Connect!")
 
 st.markdown("""
-**Email** [novendhi.reiner@gmail.com](mailto:novendhi.reiner@gmail.com)  
-**GitHub** [novendhireiner](https://github.com/novendhireiner)  
-**LinkedIn** [LinkedIn Profile](https://www.linkedin.com/in/nrmaturbongs)
-**Certifications** [Scrum Master Certification](https://scrum.org/certificates/1089070)  
+📧 **Email**: [novendhi.reiner@gmail.com](mailto:novendhi.reiner@gmail.com)  
+🔗 **GitHub**: [novendhireiner](https://github.com/novendhireiner)  
+💼 **LinkedIn**: [LinkedIn Profile](https://www.linkedin.com/in/nrmaturbongs)  
+🎓 **Certifications**: [Scrum Master Certification](https://scrum.org/certificates/1089070)  
 """)
 
 st.write("Feel free to reach out to discuss data analytics, energy infrastructure, or potential collaborations! 🚀")
-""")
