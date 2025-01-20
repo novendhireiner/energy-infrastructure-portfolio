@@ -7,19 +7,20 @@ import plotly.graph_objects as go
 
 plt.style.use("bmh")
 
-st.title("Decarbonizing Electricity Supply with PyPSA")
+st.title("Decarbonizing Germany’s Electricity Supply: A Capacity Expansion Planning Model with PyPSA")
 
 st.markdown("""
-## Project Overview
-This project models and optimizes Germany’s electricity system using PyPSA (Python for Power System Analysis). 
-It allows users to:
+As the world accelerates toward a carbon-neutral future, planning the transformation of electricity systems becomes critical. 
+This project leverages PyPSA (Python for Power System Analysis) to model and optimize Germany’s electricity network, 
+balancing renewable energy expansion, system costs, and carbon constraints. By allowing users to adjust CO₂ emission limits, 
+the model demonstrates how different policies impact the deployment of solar, wind, gas, and storage technologies, helping policymakers 
+and researchers explore pathways to a cleaner energy system.
 
-✅ Adjust CO₂ emission limits  
-✅ Optimize renewable energy generation & grid capacity  
-✅ Analyze energy dispatch & system costs  
-✅ Perform sensitivity analysis on CO₂ policies  
-
-The optimization minimizes total system costs while satisfying electricity demand using renewables (solar, wind) and transmission expansion.
+The code integrates real-world technology cost data, historical electricity demand, and renewable energy availability to build 
+an interactive simulation. It enables users to experiment with generation capacities, storage technologies, and CO₂ restrictions, 
+optimizing the system to minimize costs while ensuring electricity demand is met. Through interactive visualizations, the project 
+provides insights into energy dispatch, system costs, and the impact of decarbonization policies, making it a powerful tool for 
+energy system planning.
 """)
 
 st.sidebar.header("Model Settings")
@@ -31,8 +32,7 @@ st.markdown("""
 ## Data Overview
 This model uses:
 - **Technology Costs (from PyPSA technology data, 2030)**
-- **Electricity Demand (Germany 2015)**
-- **Renewable Generation Time Series**
+- **Electricity Demand and Renewable Generation Time Series (Germany 2015)**
 """)
 
 # Load and Visualize Data
