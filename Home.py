@@ -50,7 +50,7 @@ This portfolio showcases **real-world case studies, interactive visualizations, 
 st.write("### 📬 Let's Connect!")
 
 st.markdown("""
-📧 **Email**: [novendhi.reiner@gmail.com](mailto:novendhi.reiner@gmail.com)  
+📨 **Email**: [novendhi.reiner@gmail.com](mailto:novendhi.reiner@gmail.com)  
 🔗 **GitHub**: [novendhireiner](https://github.com/novendhireiner)  
 💼 **LinkedIn**: [LinkedIn Profile](https://www.linkedin.com/in/nrmaturbongs)
 🎓 **Certifications**: [Scrum Master Certification](https://scrum.org/certificates/1089070)  
