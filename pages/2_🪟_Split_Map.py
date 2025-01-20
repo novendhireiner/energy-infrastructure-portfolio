@@ -15,7 +15,6 @@ This project models and optimizes Germany’s electricity system using PyPSA (Py
 It allows users to:
 
 ✅ Adjust CO₂ emission limits  
-✅ Modify transmission expansion costs  
 ✅ Optimize renewable energy generation & grid capacity  
 ✅ Analyze energy dispatch & system costs  
 ✅ Perform sensitivity analysis on CO₂ policies  
@@ -25,11 +24,8 @@ The optimization minimizes total system costs while satisfying electricity deman
 
 st.sidebar.header("Model Settings")
 
-# 1️⃣ User-Controlled CO₂ Limit
+# User-Controlled CO₂ Limit
 co2_limit = st.sidebar.slider("Set CO₂ Emission Limit (MtCO₂)", min_value=0, max_value=200, value=50, step=10) * 1e6  # Convert to tons
-
-# 2️⃣ Modify Transmission Expansion Costs
-transmission_cost = st.sidebar.number_input("Transmission Expansion Cost (€/MW-km)", min_value=0, value=500)
 
 st.markdown("""
 ## Data Overview
@@ -160,13 +156,13 @@ n.add("Generator", "OCGT", bus="electricity", carrier="OCGT",
       capital_cost=costs.at["OCGT", "capital_cost"], marginal_cost=costs.at["OCGT", "marginal_cost"],
       efficiency=costs.at["OCGT", "efficiency"], p_nom_extendable=True)
 
-# Add Storage Units
+# Add Storage Units with energy-to-power ratio of 6 h
 n.add("StorageUnit", "battery storage", bus="electricity", carrier="battery storage",
       max_hours=6, capital_cost=costs.at["battery inverter", "capital_cost"] + 6 * costs.at["battery storage", "capital_cost"],
       efficiency_store=costs.at["battery inverter", "efficiency"], efficiency_dispatch=costs.at["battery inverter", "efficiency"],
       p_nom_extendable=True, cyclic_state_of_charge=True)
 
-# Add Hydrogen Storage
+# Add Hydrogen Storage with energy-to-power ratio of 168 h 
 capital_costs = (costs.at["electrolysis", "capital_cost"] + costs.at["fuel cell", "capital_cost"] + 168 * costs.at["hydrogen storage underground", "capital_cost"])
 n.add("StorageUnit", "hydrogen storage underground", bus="electricity", carrier="hydrogen storage underground",
       max_hours=168, capital_cost=capital_costs,
