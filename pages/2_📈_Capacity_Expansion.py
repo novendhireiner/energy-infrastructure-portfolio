@@ -10,18 +10,25 @@ plt.style.use("bmh")
 st.title("Decarbonizing Germany’s Electricity Supply: A Capacity Expansion Planning Model with PyPSA")
 
 st.markdown("""
-As the world accelerates toward a carbon-neutral future, planning the transformation of electricity systems becomes critical.  
-This project leverages **PyPSA (Python for Power System Analysis)** to model and optimize Germany’s electricity network,  
-balancing **renewable energy expansion, system costs, and carbon constraints**. By allowing users to adjust **CO₂ emission limits**,  
-the model demonstrates how different policies impact the deployment of **solar, wind, gas, and storage technologies**,  
-helping policymakers and researchers explore pathways to a cleaner energy system.  
+    <style>
+        .justified-text {
+            text-align: justify;
+        }
+    </style>
+    <div class="justified-text">  
+        As the world accelerates toward a carbon-neutral future, planning the transformation of electricity systems becomes critical.  
+        This project leverages <b>PyPSA (Python for Power System Analysis)</b> to model and optimize Germany’s electricity network,  
+        balancing <b>renewable energy expansion, system costs, and carbon constraints</b>. By allowing users to adjust <b>CO₂ emission limits</b>,  
+        the model demonstrates how different policies impact the deployment of <b>solar, wind, gas, and storage technologies</b>,  
+        helping policymakers and researchers explore pathways to a cleaner energy system.  
 
-The code integrates **real-world technology cost data**, **historical electricity demand**, and **renewable energy availability**  
-to build an interactive simulation. It enables users to experiment with **generation capacities, storage technologies, and CO₂ restrictions**,  
-optimizing the system to **minimize costs** while ensuring electricity demand is met. Through interactive visualizations,  
-the project provides insights into **energy dispatch**, **system costs**, and **the impact of decarbonization policies**,  
-making it a powerful tool for energy system planning.  
-""")
+        The code integrates <b>real-world technology cost data</b>, <b>historical electricity demand</b>, and <b>renewable energy availability</b>  
+        to build an interactive simulation. It enables users to experiment with <b>generation capacities, storage technologies, and CO₂ restrictions</b>,  
+        optimizing the system to <b>minimize costs</b> while ensuring electricity demand is met. Through interactive visualizations,  
+        the project provides insights into <b>energy dispatch</b>, <b>system costs</b>, and <b>the impact of decarbonization policies</b>,  
+        making it a powerful tool for energy system planning.  
+    </div>
+""", unsafe_allow_html=True)
 
 st.markdown("""
 ## **How to Use the App**  
