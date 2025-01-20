@@ -15,7 +15,7 @@ Berlin Ladeinfrastruktur
 
 st.sidebar.title("About")
 st.sidebar.info(markdown)
-logo = "data/grid.png"
+logo = "data/ladestation.png"
 st.sidebar.image(logo)
 
 # ---- Daten einlesen ----
@@ -76,6 +76,8 @@ Um die gewünschten Informationen zu erhalten, folgen Sie diesen Schritten:
 4. **Karte erkunden**: Die interaktive Karte zeigt die Ladestationen in Berlin. Bestehende Ladestationen werden in Blau dargestellt, während neu berechnete Standorte rot markiert sind. Durch Anklicken erhalten Sie detaillierte Informationen zu Betreiber, Ladeleistung und Standort.
 
 5. **Analyseergebnisse betrachten**: Unterhalb der Karte finden Sie eine Zusammenfassung mit der Anzahl der aktuell sichtbaren Ladestationen und weiteren relevanten Informationen.
+
+
 ''')
 
 # Bezirksauswahl hinzufügen
