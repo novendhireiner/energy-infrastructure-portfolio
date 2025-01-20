@@ -140,10 +140,6 @@ n.add("StorageUnit", "hydrogen storage underground", bus="electricity", carrier=
       max_hours=168, capital_cost=capital_costs,
       efficiency_store=costs.at["electrolysis", "efficiency"], efficiency_dispatch=costs.at["fuel cell", "efficiency"],
       p_nom_extendable=True, cyclic_state_of_charge=True)
-
-def system_cost(n):
-    tsc = pd.concat([n.statistics.capex(), n.statistics.opex()], axis=1)
-    return tsc.sum(axis=1).droplevel(0).div(1e9).round(2)  # billion €/a
     
 # Optimize Model
 st.sidebar.subheader("Run Optimization")
@@ -159,6 +155,10 @@ if st.sidebar.button("Optimize System"):
     st.write(n.storage_units.p_nom_opt * n.storage_units.max_hours / 1e3)
 
     # Show System Cost Breakdown with Stackable Bar Chart
+    def system_cost(n):
+        tsc = pd.concat([n.statistics.capex(), n.statistics.opex()], axis=1)
+        return tsc.sum(axis=1).droplevel(0).div(1e9).round(2)  # billion €/a
+    
     st.subheader("System Cost Breakdown (in billion €/a)")
     cost_df = system_cost(n)
 
@@ -237,18 +237,18 @@ if st.sidebar.button("Optimize System"):
     #n.export_to_netcdf("network-new.nc")
     #st.success("Optimization Completed! Results Saved.")
 
-# Run Sensitivity Analysis when the options is clicked
-st.sidebar.subheader("Sensitivity Analysis Settings")
-all_co2_values = [0, 25, 50, 100, 150, 200]
-co2_values_sa = st.sidebar.multiselect("Select CO₂ Limits (MtCO₂)", all_co2_values, default=all_co2_values)
+    # Run Sensitivity Analysis when the options is clicked
+    st.sidebar.subheader("Sensitivity Analysis Settings")
+    all_co2_values = [0, 25, 50, 100, 150, 200]
+    co2_values_sa = st.sidebar.multiselect("Select CO₂ Limits (MtCO₂)", all_co2_values, default=all_co2_values)
     
-# Sensitivity Analysis
-sensitivity = {}
-if st.sidebar.button("Run Sensitivity Analysis"):
-    for co2 in co2_values_sa:
-        n.global_constraints.loc["CO2Limit", "constant"] = co2 * 1e6
-        n.optimize(solver_name="highs")
-        sensitivity[co2] = system_cost(n)
+    # Sensitivity Analysis
+    sensitivity = {}
+    if st.sidebar.button("Run Sensitivity Analysis"):
+        for co2 in co2_values_sa:
+            n.global_constraints.loc["CO2Limit", "constant"] = co2 * 1e6
+            n.optimize(solver_name="highs")
+            sensitivity[co2] = system_cost(n)
     
     df = pd.DataFrame(sensitivity).T  # Convert to DataFrame
     
