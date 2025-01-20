@@ -10,17 +10,45 @@ plt.style.use("bmh")
 st.title("Decarbonizing Germany’s Electricity Supply: A Capacity Expansion Planning Model with PyPSA")
 
 st.markdown("""
-As the world accelerates toward a carbon-neutral future, planning the transformation of electricity systems becomes critical. 
-This project leverages PyPSA (Python for Power System Analysis) to model and optimize Germany’s electricity network, 
-balancing renewable energy expansion, system costs, and carbon constraints. By allowing users to adjust CO₂ emission limits, 
-the model demonstrates how different policies impact the deployment of solar, wind, gas, and storage technologies, helping policymakers 
-and researchers explore pathways to a cleaner energy system.
+As the world accelerates toward a carbon-neutral future, planning the transformation of electricity systems becomes critical.  
+This project leverages **PyPSA (Python for Power System Analysis)** to model and optimize Germany’s electricity network,  
+balancing **renewable energy expansion, system costs, and carbon constraints**. By allowing users to adjust **CO₂ emission limits**,  
+the model demonstrates how different policies impact the deployment of **solar, wind, gas, and storage technologies**,  
+helping policymakers and researchers explore pathways to a cleaner energy system.  
 
-The code integrates real-world technology cost data, historical electricity demand, and renewable energy availability to build 
-an interactive simulation. It enables users to experiment with generation capacities, storage technologies, and CO₂ restrictions, 
-optimizing the system to minimize costs while ensuring electricity demand is met. Through interactive visualizations, the project 
-provides insights into energy dispatch, system costs, and the impact of decarbonization policies, making it a powerful tool for 
-energy system planning.
+The code integrates **real-world technology cost data**, **historical electricity demand**, and **renewable energy availability**  
+to build an interactive simulation. It enables users to experiment with **generation capacities, storage technologies, and CO₂ restrictions**,  
+optimizing the system to **minimize costs** while ensuring electricity demand is met. Through interactive visualizations,  
+the project provides insights into **energy dispatch**, **system costs**, and **the impact of decarbonization policies**,  
+making it a powerful tool for energy system planning.  
+""")
+
+st.markdown("""
+## **How to Use the App**  
+
+### 1. Adjust Model Settings  
+- Use the **sidebar slider** to set a CO₂ emission limit (in MtCO₂).  
+- This determines how much carbon can be emitted by the electricity system.  
+
+### 2. Explore the Data  
+- Check the **technology cost table** to see capital and operational expenses.  
+- View the **electricity demand time series** to understand the system’s energy needs.  
+- Examine the **wind and solar capacity factors** to analyze renewable availability over time.  
+
+### 3. Run the Optimization  
+- Click the **"Optimize System"** button in the sidebar.  
+- The model will compute the least-cost generation and storage mix under the given CO₂ constraint.  
+- Results include:  
+  - **Optimized generation and storage capacities**  
+  - **System cost breakdown (capital vs operational expenses)**  
+  - **Energy dispatch visualization over time**  
+
+### 4. Perform Sensitivity Analysis  
+- The app automatically runs **a sensitivity analysis on different CO₂ limits**.  
+- View how system costs change with stricter or looser emission constraints.  
+
+This interactive tool provides a hands-on way to explore **capacity expansion planning**,  
+making it easier to understand the economic and technical trade-offs in the transition to a low-carbon electricity system.  
 """)
 
 st.sidebar.header("Model Settings")
@@ -233,10 +261,6 @@ if st.sidebar.button("Optimize System"):
         
     plot_dispatch(n)
     
-    # Save Results
-    #n.export_to_netcdf("network-new.nc")
-    #st.success("Optimization Completed! Results Saved.")
-
     # Run Sensitivity Analysis 
     all_co2_values = [0, 25, 50, 100, 150, 200]
     
