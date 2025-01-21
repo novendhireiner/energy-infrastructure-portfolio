@@ -53,8 +53,8 @@ st.write("### 📬 Let's Connect!")
 st.markdown("""
 🔗 **GitHub**: [novendhireiner](https://github.com/novendhireiner)  
 💼 **LinkedIn**: [LinkedIn Profile](https://www.linkedin.com/in/nrmaturbongs)  
-🎓 **Certifications**: [Scrum Master Certification: PSM I](https://scrum.org/certificates/1089070) please provide my
-**Email**: [novendhi.reiner@gmail.com](mailto:novendhi.reiner@gmail.com)  
+🎓 **Certifications**: [Scrum Master Certification: PSM I](https://scrum.org/certificates/1089070)  
+📧 **Email**: [novendhi.reiner@gmail.com](mailto:novendhi.reiner@gmail.com)  
 """)
 
 st.write("Feel free to reach out to discuss data analytics, energy infrastructure, or potential collaborations! 🚀")
