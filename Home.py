@@ -53,7 +53,7 @@ st.write("### 📬 Let's Connect!")
 st.markdown("""
 🔗 **GitHub**: [novendhireiner](https://github.com/novendhireiner)  
 💼 **LinkedIn**: [LinkedIn Profile](https://www.linkedin.com/in/nrmaturbongs)  
-🎓 **Certifications**: [Scrum Master Certification](https://scrum.org/certificates/1089070)
+🎓 **Certifications**: [Scrum Master Certification](https://scrum.org/certificates/1089070) 
 📧 **Email**: [novendhi.reiner@gmail.com](mailto:novendhi.reiner@gmail.com)  
 """)
 
