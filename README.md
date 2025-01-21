@@ -22,7 +22,7 @@ Welcome to my **Energy Infrastructure Portfolio**! This portfolio showcases my w
 ## 🛠️ Technologies Used  
 - **Programming**: Python, Pandas, Geopandas
 - **Energy Modeling**: PyPSA, Osmnx
-- **EVisualization**: Folium, Plotly
+- **Visualization**: Streamlit, Folium, Plotly
 ---
 
 ## 📬 Contact  
