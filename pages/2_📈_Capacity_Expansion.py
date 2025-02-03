@@ -181,6 +181,12 @@ n.add("StorageUnit", "hydrogen storage underground", bus="electricity", carrier=
 # Optimize Model
 st.sidebar.subheader("Run Optimization")
 if st.sidebar.button("Optimize System"):
+    sensitivity = {}  # Reset sensitivity on each run
+    for co2 in all_co2_values:
+        # Remove old CO2 constraint
+        if "CO2Limit" in n.global_constraints.index:
+            n.global_constraints.drop("CO2Limit", inplace=True)
+
     n.add("GlobalConstraint", "CO2Limit", carrier_attribute="co2_emissions", sense="<=", constant=0)
     n.optimize(solver_name="highs")
 
