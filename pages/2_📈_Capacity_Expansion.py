@@ -284,7 +284,7 @@ if st.sidebar.button("Optimize System"):
 
     fig = px.area(df, x=df.index, y=df.columns, title="System Cost vs CO₂ Emissions",
                   labels={"index": "CO₂ Emissions (MtCO₂)", "value": "System Cost (bn€/a)"},
-                 color=df.columns.map(n.carriers.color), color_discrete_map=color_mapping)
+                 color=cost_df.index, color_discrete_map=color_mapping)
     fig.update_xaxes(range=[0, 150], title="CO₂ Emissions (MtCO₂)")
     fig.update_yaxes(range=[0, 100], title="System Cost (bn€/a)")
     
