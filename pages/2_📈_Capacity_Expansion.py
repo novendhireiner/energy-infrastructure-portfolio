@@ -275,7 +275,9 @@ if st.sidebar.button("Optimize System"):
     all_co2_values = [0, 25, 50, 100, 150, 200]
     
     # Identify technologies that were actually built
-    optimized_technologies = n.generators.loc[n.generators.p_nom_opt > 0].index.tolist()
+    optimized_generators = n.generators.loc[n.generators.p_nom_opt > 0].index.tolist()
+    optimized_storage = n.storage_units.loc[n.storage_units.p_nom_opt > 0].index.tolist()
+    optimized_technologies = optimized_generators + optimized_storage
 
     
     # Sensitivity Analysis
