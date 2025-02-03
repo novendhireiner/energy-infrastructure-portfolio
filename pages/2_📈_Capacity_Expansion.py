@@ -284,6 +284,6 @@ if st.sidebar.button("Optimize System"):
 
     fig = px.area(df, x=df.index, y=df.columns, title="System Cost vs CO₂ Emissions",
                   labels={"index": "CO₂ Emissions (MtCO₂)", "value": "System Cost (bn€/a)"},
-                 color=df.index, color_discrete_map=color_mapping)
+                 color=df.columns.map(n.carriers.color), color_discrete_map=color_mapping, xlim=(0, 150), ylim=(0, 100))
     fig.update_layout(xaxis_title="CO₂ Emissions (MtCO₂)", yaxis_title="System Cost (bn€/a)")
     st.plotly_chart(fig, use_container_width=True)
