@@ -273,12 +273,20 @@ if st.sidebar.button("Optimize System"):
     # Run Sensitivity Analysis 
     all_co2_values = [0, 25, 50, 100, 150, 200]
     
+    # Identify technologies that were actually built
+    optimized_technologies = n.generators.loc[n.generators.p_nom_opt > 0].index.tolist()
+
+    
     # Sensitivity Analysis
     sensitivity = {}
     for co2 in all_co2_values:
         n.global_constraints.loc["CO2Limit", "constant"] = co2 * 1e6
         n.optimize(solver_name="highs")
         sensitivity[co2] = system_cost(n)
+        
+         # Only include system costs for the optimized technologies
+        system_costs = system_cost(n).loc[optimized_technologies]
+        sensitivity[co2] = system_costs
     
     df = pd.DataFrame(sensitivity).T  # Convert to DataFrame
 
