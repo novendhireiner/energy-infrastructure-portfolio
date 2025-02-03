@@ -97,7 +97,7 @@ if selected_bezirk != "Alle":
 filter_by_power = st.checkbox("Nur Ladestationen mit mindestens 50 kW anzeigen", value=False)
 
 if filter_by_power:
-    gdf_ladesaeulen = gdf_ladesaeulen[gdf_ladesaeulen['Nennleistung Ladeeinrichtung [kW]'] >= 50]
+    gdf_ladesaeulen = gdf_ladesaeulen[gdf_ladesaeulen['Nennleistung Ladeeinrichtung [kW]'] > 50]
 
 # ---- Pufferzone um Verkehrsknotenpunkte erstellen ----
 buffer = nodes.buffer(0.005)  # 0.005° ≈ 500m
