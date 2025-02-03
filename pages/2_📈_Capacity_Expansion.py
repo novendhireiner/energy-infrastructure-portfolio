@@ -20,7 +20,10 @@ st.markdown("""
         This project leverages <b>PyPSA (Python for Power System Analysis)</b> to model and optimize Germany’s electricity network,  
         balancing <b>renewable energy expansion, system costs, and carbon constraints</b>. By allowing users to adjust <b>CO₂ emission limits</b>,  
         the model demonstrates how different policies impact the deployment of <b>solar, wind, gas, and storage technologies</b>,  
-        helping policymakers and researchers explore pathways to a cleaner energy system. &nbsp; &nbsp;
+        helping policymakers and researchers explore pathways to a cleaner energy system. 
+
+        <br><br>
+        
         The code integrates <b>real-world technology cost data</b>, <b>historical electricity demand</b>, and <b>renewable energy availability</b>  
         to build an interactive simulation. It enables users to experiment with <b>generation capacities, storage technologies, and CO₂ restrictions</b>,  
         optimizing the system to <b>minimize costs</b> while ensuring electricity demand is met. Through interactive visualizations,  
