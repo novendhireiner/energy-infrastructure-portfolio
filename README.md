@@ -26,7 +26,6 @@ Welcome to my **Energy Infrastructure Portfolio**! This portfolio showcases my w
 ---
 
 ## 📬 Contact  
-📧 **Email**: [novendhi.reiner@gmail.com](mailto:novendhi.reiner@gmail.com)  
 🔗 **GitHub**: [novendhireiner](https://github.com/novendhireiner)  
 💼 **LinkedIn**: [LinkedIn Profile](https://www.linkedin.com/in/nrmaturbongs)  
 
